@@ -1,5 +1,8 @@
 {
   "name": "taxbit-plugins",
+  "owner": {
+    "name": "TaxBit"
+  },
   "plugins": [
     {
       "name": "taxbit",
