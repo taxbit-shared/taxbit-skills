@@ -26,7 +26,8 @@ Each `SKILL.md` has YAML frontmatter (`name`, `description`, `allowed-tools`) fo
 
 Users add this plugin with:
 ```
-/plugins add <repo-url>
+/plugin marketplace add git@github.com:taxbit-shared/taxbit-skills.git
+/plugin install taxbit@taxbit-plugins
 ```
 
 ## Editing Guidelines

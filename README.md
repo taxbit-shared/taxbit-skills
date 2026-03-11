@@ -13,8 +13,11 @@ Skills are auto-invoked when Claude detects a relevant task, or you can invoke t
 
 ## Installation
 
+Add the marketplace, then install the plugin:
+
 ```
-/plugins add https://github.com/taxbit-shared/taxbit-skills
+/plugin marketplace add git@github.com:taxbit-shared/taxbit-skills.git
+/plugin install taxbit@taxbit-plugins
 ```
 
 ## Project Structure
