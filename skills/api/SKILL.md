@@ -23,19 +23,23 @@ Taxbit provides REST APIs for cryptocurrency and digital asset tax compliance, i
 - **Gains & Inventory** — cost basis tracking, disposition methods, gain/loss calculations
 - **Form Items** — IRS form line items (1099-B, 1099-MISC, etc.)
 - **Documents** — generated tax documents and reports
-- **Webhooks** — event-driven notifications
+- **Payers** — payer/filer entity management
+- **Real-Time TIN Validation** — validate TINs against IRS records
 
-## Base URL
+## Base URLs
 
 ```
-https://api.multi1.enterprise.taxbit.com/v1
+Production: https://api.multi1.enterprise.taxbit.com/v1
+Staging:    https://api.multi1.enterprise-staging.taxbit.com/v1
 ```
 
 ## Authentication
 
-All requests require a Bearer token obtained via OAuth client credentials flow.
+All requests require a Bearer token. There are two token types:
 
-**Request a token:**
+### Tenant-Scoped Token
+
+Used for most API operations (account owners, accounts, transactions, gains, inventory, form items, documents, payers).
 
 ```
 POST /oauth/token
@@ -49,86 +53,293 @@ Content-Type: application/json
 }
 ```
 
-- Tokens are valid for **24 hours** (86,400 seconds).
-- Use the `access_token` from the response as `Authorization: Bearer <token>` on all subsequent requests.
-- `tenant_id` is required when credentials span multiple tenants.
-- For embedded/account-owner-scoped flows, use `POST /oauth-account-owner-token` instead.
+### Account-Owner-Scoped Token
 
-**Token response:**
+Used for tax documentation submission and the React SDK. Scoped to a single account owner.
+
+```
+POST /oauth/account-owner-token
+Content-Type: application/json
+
+{
+  "client_id": "<YOUR_CLIENT_ID>",
+  "client_secret": "<YOUR_CLIENT_SECRET>",
+  "grant_type": "client_credentials",
+  "tenant_id": "<YOUR_TENANT_ID>",
+  "account_owner_id": "<ACCOUNT_OWNER_TAXBIT_ID>"
+}
+```
+
+You can also use your external ID instead of `account_owner_id`:
+```json
+{
+  "client_id": "<YOUR_CLIENT_ID>",
+  "client_secret": "<YOUR_CLIENT_SECRET>",
+  "grant_type": "client_credentials",
+  "tenant_id": "<YOUR_TENANT_ID>",
+  "id": "<YOUR_EXTERNAL_ACCOUNT_OWNER_ID>"
+}
+```
+
+**Token response (both types):**
 ```json
 {
   "access_token": "eyJhbG...",
   "expires_in": 86400,
-  "scope": "read:coins read:taxprofiles",
   "token_type": "Bearer"
 }
 ```
 
-## Key Endpoints
+- Tokens are valid for **24 hours** (86,400 seconds).
+- Use as `Authorization: Bearer <access_token>` on all subsequent requests.
+- **Never expose `client_secret` in client-side code.** Account-owner tokens should be obtained server-side and passed to the frontend.
 
-### Account Owners
+## Account Owners
 
-| Method  | Path                                            | Description                 |
-|---------|-------------------------------------------------|-----------------------------|
-| POST    | `/account-owners`                               | Create an account owner     |
-| PATCH   | `/account-owners/{id}`                          | Update an account owner     |
-| GET     | `/account-owners/{id}`                          | Retrieve an account owner   |
-| GET     | `/account-owners/{id}/us-tin-validation-status` | Check TIN validation status |
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/account-owners` | Create an account owner |
+| PATCH | `/account-owners/{id}` | Update an account owner |
+| GET | `/account-owners/{id}` | Retrieve an account owner |
+| GET | `/account-owners/{id}/us-tin-validation-status` | Get US TIN validation status |
 
-**Create Account Owner — required fields:**
-- `id` (string) — your system's unique identifier
-- `account_owner_type` (enum) — `"INDIVIDUAL"` or `"ENTITY"`
+**Create/Update fields:**
 
-**Common optional fields:** `name`, `email`, `phone`, `birth_date`, `tin`, `tin_type` (`US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `OTHER`), `tax_country_code`, `address` (object with `first_line`, `second_line`, `city`, `state_or_province`, `country`, `postal_code`), `is_tax_exempt`, `us_tax_classification`, `fatca_classification`.
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Your system's unique identifier |
+| `account_owner_type` | enum | Yes | `INDIVIDUAL` or `ENTITY` |
+| `name` | string | No | Full name |
+| `email` | string | No | Email address |
+| `phone` | string | No | Phone number |
+| `birth_date` | date | No | ISO-8601 date |
+| `tin` | string | No | Tax identification number |
+| `tin_type` | enum | No | `US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `OTHER` |
+| `tax_country_code` | string | No | ISO 3166-1 alpha-2 country code |
+| `address` | object | No | `first_line`, `second_line`, `city`, `state_or_province`, `country`, `postal_code` |
+| `mailing_address` | object | No | Same structure as `address` |
+| `prefers_physical_mail` | boolean | No | Physical mail preference |
 
-An `account` object can be nested inside the account owner creation to create both simultaneously.
+An `account` object can be nested inside account owner creation to create both simultaneously.
 
-### Accounts
+**TIN validation status values:** `PENDING`, `VALID_SSN_MATCH`, `VALID_EIN_MATCH`, `MISMATCH`, `INVALID_DATA`, `TIN_NOT_ISSUED`, `ERROR`, `FOREIGN`
 
-| Method  | Path             | Description         |
-|---------|------------------|---------------------|
-| POST    | `/accounts`      | Create an account   |
-| PATCH   | `/accounts/{id}` | Update an account   |
-| GET     | `/accounts/{id}` | Retrieve an account |
+## Accounts
 
-### Transactions
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/accounts` | Create an account |
+| PATCH | `/accounts/{id}` | Update an account |
+| GET | `/accounts/{id}` | Retrieve an account |
 
-| Method  | Path                               | Description                           |
-|---------|------------------------------------|---------------------------------------|
-| POST    | `/transactions/external-id`        | Send (create or update) a transaction |
-| GET     | `/transactions/{external-id}/{id}` | Retrieve a transaction                |
-| DELETE  | `/transactions/{external-id}/{id}` | Delete a transaction                  |
-| GET     | `/accounts/{id}/transactions`      | List transactions for an account      |
+**Create fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Your system's unique identifier |
+| `payer_id` | UUID | No | Payer/filer identifier |
+| `account_type` | enum | No | `US_IRA_TRADITIONAL`, `US_IRA_ROTH`, `US_IRA_SEP`, `US_IRA_SIMPLE` |
+| `establishment_date` | date | No | ISO-8601 account creation date |
+| `disposition_method` | enum | No | `HIFO`, `FIFO`, `LIFO`, `LOFO` |
+| `year_end_fair_market_value` | array | No | Objects with `year_end` (4-digit year) and `fair_market_value` (USD string) |
+| `secondary_account_owner_ids` | array | No | Additional owner identifiers |
+| `closest_intermediary_account_id` | string | No | Upstream intermediary reference |
+
+**Example response:**
+```json
+{
+  "data": {
+    "id": "37480283",
+    "taxbit_id": "424cd1a7-981e-4df0-9dfc-639a092fb369",
+    "tenant_id": "673962f6-675c-45c3-a5a0-d9369e886582",
+    "date_created": "2023-08-19",
+    "date_modified": "2023-10-19",
+    "account_owner_id": "JohnDoe864",
+    "payer_id": "a1db8f72-7fd8-44db-9d4f-9fe01ec22aac",
+    "account_type": "US_IRA_TRADITIONAL",
+    "establishment_date": "2020-08-19",
+    "year_end_fair_market_value": [
+      { "year_end": "2023", "fair_market_value": "500" }
+    ],
+    "disposition_method": "HIFO"
+  }
+}
+```
+
+## Transactions
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/transactions/external-id` | Send (create or update) a transaction |
+| GET | `/transactions/{external-id}/{id}` | Retrieve a transaction |
+| DELETE | `/transactions/{external-id}/{id}` | Delete a transaction |
+| GET | `/accounts/{id}/transactions` | List transactions for an account |
 
 Transactions use an **upsert** pattern — POST creates or updates based on your external ID.
 
-### Tax Documentation
+### Transaction Aggregations
 
-| Method  | Path                                                                 | Description                |
-|---------|----------------------------------------------------------------------|----------------------------|
-| POST    | `/account-owners/{id}/tax-documentation-data/w-9`                    | Submit W-9                 |
-| POST    | `/account-owners/{id}/tax-documentation-data/w-8ben`                 | Submit W-8BEN              |
-| POST    | `/account-owners/{id}/tax-documentation-data/w-8ben-e`               | Submit W-8BEN-E            |
-| POST    | `/account-owners/{id}/tax-documentation-data/self-certification`     | Submit self-certification  |
-| GET     | `/account-owners/{id}/tax-documentation-data`                        | Retrieve tax documentation |
-| GET     | `/account-owners/{id}/tax-documentation-status`                      | Check documentation status |
-| POST    | `/account-owners/{id}/tax-documentation-data/document`               | Generate a document        |
-| GET     | `/account-owners/{id}/tax-documentation-data/document/{document-id}` | Retrieve a document        |
-| GET     | `/tax-treaty-rates`                                                  | Get tax treaty rates       |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/accounts/{id}/income` | Aggregate income data for a given time period |
 
-### Other Endpoints
+## Tax Documentation
 
-- **Gains** — retrieve realized gains/losses
-- **Inventory** — cost basis and lot tracking
-- **Disposition Methods** — FIFO, LIFO, HIFO, specific identification
-- **Form Items** — IRS form line item data
-- **Documents** — generated tax forms and reports
-- **Payers** — payer entity management
-- **Real-Time TIN Validation** — validate TINs against IRS records
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/account-owners/{id}/tax-documentation-data/w-9` | Submit W-9 |
+| POST | `/account-owners/{id}/tax-documentation-data/w-8ben` | Submit W-8BEN |
+| POST | `/account-owners/{id}/tax-documentation-data/w-8ben-e` | Submit W-8BEN-E |
+| POST | `/account-owners/{id}/tax-documentation-data/self-certification` | Submit self-certification |
+| GET | `/account-owners/{id}/tax-documentation-data` | Retrieve tax documentation data |
+| GET | `/account-owners/{id}/tax-documentation-status` | Get documentation status |
+| POST | `/account-owners/{id}/tax-documentation-data/document` | Generate a PDF document |
+| GET | `/account-owners/{id}/tax-documentation-data/document/{document-id}` | Retrieve a generated document |
+| GET | `/tax-treaty-rates` | Get tax treaty withholding rates |
+
+### W-9 Submission
+
+Key request body fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `w9_tax_classification` | enum | `INDIVIDUAL`, `C_CORPORATION`, `S_CORPORATION`, `PARTNERSHIP`, `TRUST_ESTATE`, `LLC` variants, `SOLE_PROPRIETOR`, `OTHER` |
+| `tin` | string | Tax identification number |
+| `tin_type` | enum | `US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `OTHER` |
+| `address` | object | `first_line`, `second_line`, `city`, `state_or_province`, `postal_code`, `country` |
+| `exempt_payee_code` | string | Withholding exemption code |
+| `exempt_fatca_code` | string | FATCA exemption code |
+| `tax_residences` | array | Country, TIN, and status for each tax residence |
+
+### W-8BEN Submission (Non-US Individuals)
+
+Key request body fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `permanent_address` | object | Permanent residence address |
+| `mailing_address` | object | Optional mailing address if different |
+| `tax_residences` | array | Tax residences with country, TIN, and exemption info |
+| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
+| `control_persons` | array | Individuals with ownership/control over entities |
+
+### W-8BEN-E Submission (Non-US Entities)
+
+Key request body fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
+| `entity_type` | enum | Corporation, Partnership, Trust variants, Government entities, etc. |
+| `permanent_address` | object | Physical address |
+| `mailing_address` | object | Optional correspondence address |
+| `tax_residences` | array | Country-specific tax information with TIN |
+| `controlling_persons` | array | Name, address, citizenship, birth details, ownership percentage, role |
+| `limitation_on_benefits` | enum | LOB provisions (Government, Tax-exempt pension, etc.) |
+| `type_of_income` | enum | `ROYALTIES_OTHER` or `BUSINESS_PROFITS` |
+| `exemption_codes` | object | Payee and FATCA exemption codes |
+
+### Self-Certification Submission (CRS/CARF/DAC8)
+
+Key request body fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
+| `classification` | enum | `INDIVIDUAL`, `FINANCIAL_INSTITUTION` variants, `ACTIVE_NFE` variants, `PASSIVE_NFE` |
+| `account_type` | enum | `FINANCIAL_INSTITUTION`, `PASSIVE_NON_FINANCIAL_ENTITY`, `ACTIVE_NON_FINANCIAL_ENTITY` |
+| `entity_type` | enum | `TRUST`, `SIMILAR_TO_TRUST`, `OTHER` |
+| `tax_residences` | array | Country, TIN, `tin_not_required`, `tin_not_required_reason` (`NOT_ISSUED`, `NOT_REQUIRED`, `OTHER`) |
+| `address` | object | `first_line`, `second_line`, `city`, `state_or_province`, `postal_code`, `country` |
+| `controlling_persons` | array | See below |
+| `signature_capacity` | enum | `OWNER`, `AUTHORIZED_SIGNER`, `TRUSTEE`, `EXECUTOR`, `GUARDIAN`, `OTHER` |
+
+**Controlling person fields:** `name`, `date_of_birth`, `address`, `mailing_address`, `country_of_birth`, `country_of_citizenship`, `city_of_birth`, `role` (`SETTLOR`, `TRUSTEE`, `PROTECTOR`, `BENEFICIARY`, `OWNER`, `SENIOR_MANAGING_OFFICIAL`, `OTHER`, plus `_EQUIVALENT` variants), `ownership_percentage`, `tax_residences`
+
+### Tax Documentation Status Response
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `calculation_status` | enum | `in_progress` or `complete` |
+| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
+
+Status includes completion details across W-9/W-8, Digital Platform Seller, and Self-Certification form types, plus expiration dates (3 years from submission) and any issues requiring resubmission.
+
+### Tax Treaty Rates
+
+`GET /tax-treaty-rates` returns withholding rates for a specified country, including general rates and special rates with treaty article references for interest, dividends, and other income.
+
+## Gains
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/gains` | All gains — detailed cost bases, proceeds, and gains/losses (IRS Form 8949 / 1099-B line items) |
+| GET | `/gains/breakdown` | Short-term, long-term, and total gains/losses |
+| GET | `/gains/summary` | Total gains for a specified period |
+
+## Inventory
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/inventory` | Lots and summary for a single asset (requires `asset_id` or `asset_code`) |
+| GET | `/inventory/summaries` | Summary of total cost and quantity for each undisposed asset |
+
+Lots are sorted by disposition method order (HIFO, FIFO, LIFO, or LOFO).
+
+### Transfer Lots
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/transfer-lots/transactions/{transaction-id}` | Create transfer lots with cost bases for a deposit transaction |
+| GET | `/transfer-lots/transactions/{transaction-id}` | Get transfer lots for a transaction |
+| DELETE | `/transfer-lots/transactions/{transaction-id}` | Delete transfer lots |
+| GET | `/transfer-lots/transactions` | Get transfer lots for multiple transactions |
+
+## Disposition Methods
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/accounts/{id}/disposition-methods/history` | Create disposition methods for an account |
+| PATCH | `/accounts/{id}/disposition-methods/history/{history-id}` | Update a disposition method record |
+| DELETE | `/accounts/{id}/disposition-methods/history/{history-id}` | Delete a disposition method record |
+| GET | `/accounts/{id}/disposition-methods/history` | Get disposition methods for an account |
+| GET | `/filers/{id}/disposition-methods/history` | Get disposition methods for a filer |
+
+Valid disposition methods: `HIFO`, `FIFO`, `LIFO`, `LOFO`
+
+## Form Items
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/users/{user-id}/form-items/{form-item-id}` | Get a form item |
+| PUT | `/users/{user-id}/form-items/{form-item-id}` | Upsert a form item |
+| DELETE | `/users/{user-id}/form-items/{form-item-id}` | Delete a form item |
+| POST | `/form-items/batch` | Upsert a collection of form items |
+| GET | `/users/{user-id}/form-items` | Get all form items for a user within a tax year |
+| GET | `/form-items/aggregates/{document-type}` | Aggregates by document type (total row count, proceeds, cost basis) |
+
+## Documents
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/accounts/{id}/tax-documents` | Get released tax documents for an account (latest of each type/year by default) |
+
+## Real-Time TIN Validation
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/validations/us-tin` | Validate a US TIN and name |
+| GET | `/validations/us-tin/{validation-id}` | Get validation results |
+
+## Payers
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/tenants/{tenant-id}/payers` | Get all payers for a tenant |
 
 ## Rate Limits
 
-Default rate limit is **50 requests per second**. A `429 Too Many Requests` response indicates throttling — implement exponential backoff.
+Default rate limit is **50 requests per second**. A `429 Too Many Requests` response indicates throttling — implement exponential backoff. Contact your Implementation Manager for higher limits.
 
 ## Error Handling
 
@@ -140,18 +351,28 @@ Standard HTTP status codes:
 - `409` — Conflict (duplicate ID)
 - `429` — Rate limited
 
+Error response format:
+```json
+{
+  "error": "string",
+  "message": "string"
+}
+```
+
 ## Integration Patterns
 
 When helping developers:
 
 1. **Always start with authentication** — generate a token first, cache it, and refresh before expiry.
-2. **Use idempotent external IDs** — account owners, accounts, and transactions all use your system's IDs, making operations safely retryable.
-3. **Handle the upsert pattern** — POST to `/transactions/external-id` both creates and updates.
-4. **Nest account creation** — you can create an account owner and their first account in a single POST to `/account-owners`.
-5. **Implement retry logic** — respect 429 responses with exponential backoff.
-6. **Never log or expose credentials** — `client_id`, `client_secret`, and bearer tokens must be kept secure. Use environment variables.
+2. **Use the right token type** — tenant-scoped for most operations, account-owner-scoped for tax documentation submission and React SDK.
+3. **Use idempotent external IDs** — account owners, accounts, and transactions all use your system's IDs, making operations safely retryable.
+4. **Handle the upsert pattern** — POST to `/transactions/external-id` both creates and updates.
+5. **Nest account creation** — you can create an account owner and their first account in a single POST to `/account-owners`.
+6. **Implement retry logic** — respect 429 responses with exponential backoff.
+7. **Never log or expose credentials** — `client_id`, `client_secret`, and bearer tokens must be kept secure. Use environment variables.
+8. **Check calculation status** — some responses include `calculation_status` (`in_progress` or `complete`). Poll until complete if needed.
 
 ## Full API Reference
 
-For complete endpoint schemas, refer to: https://apidocs.taxbit.com/reference
-For guides and workflows, refer to: https://apidocs.taxbit.com/docs/getting-started
+For complete endpoint schemas: https://apidocs.taxbit.com/reference
+For guides and workflows: https://apidocs.taxbit.com/docs/getting-started
