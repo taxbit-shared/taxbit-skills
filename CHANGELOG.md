@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-03-11 — Mark Swardstrom
+## [0.1.0] - 2026-03-11
 
 ### Added
 - Comprehensive API skill with full endpoint documentation for all Taxbit API resources (auth, account owners, accounts, transactions, tax documentation, gains, inventory, form items, documents, TIN validation, payers)

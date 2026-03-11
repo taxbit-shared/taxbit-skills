@@ -110,11 +110,11 @@ When tagging a new version:
 
 ## Changelog
 
-Maintain `CHANGELOG.md` using [Keep a Changelog](https://keepachangelog.com) format. Every entry must include the developer's name (from `git config user.name`) who instigated the change. Use sections like Added, Changed, Removed, Fixed. New work goes under `## [Unreleased]` until a version is tagged.
+Maintain `CHANGELOG.md` using [Keep a Changelog](https://keepachangelog.com) format. Use sections like Added, Changed, Removed, Fixed. New work goes under `## [Unreleased]` until a version is tagged.
 
 Example format:
 ```
-## [Unreleased] — Developer Name
+## [Unreleased]
 
 ### Added
 - Description of change
