@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A Claude Code plugin that provides two skills for integrating with the Taxbit platform:
+An agent skills package that provides two skills for integrating with the Taxbit platform. Compatible with Claude Code (as a plugin) and 40+ other AI agents via the [Skills CLI](https://skills.sh):
 
 - **`taxbit:api`** (`skills/api/SKILL.md`) — REST API integration guidance (authentication, endpoints, error handling)
 - **`taxbit:react-sdk`** (`skills/react-sdk/SKILL.md`) — React SDK integration for tax form collection (`@taxbit/react-sdk`)
@@ -27,7 +27,12 @@ Each `SKILL.md` has YAML frontmatter (`name`, `description`, `allowed-tools`) fo
 
 ## Installation
 
-Users add this plugin with:
+### Any Agent (via Skills CLI)
+```
+npx skills add taxbit-shared/taxbit-skills
+```
+
+### Claude Code Only
 ```
 /plugin marketplace add git@github.com:taxbit-shared/taxbit-skills.git
 /plugin install taxbit@taxbit-plugins
@@ -97,7 +102,7 @@ The README should be a brief user-facing document with:
 - Title and one-line description linking to Claude Code and Taxbit
 - Skills table (Skill | Command | Description)
 - Note about auto-invocation
-- Installation instructions (marketplace add + plugin install)
+- Installation instructions (Skills CLI for any agent, Claude Code plugin for Claude-specific)
 - Project structure tree
 - Links to Taxbit API docs and Claude Code docs
 
@@ -128,3 +133,5 @@ Example format:
 - **Both token types documented**: The API skill documents both tenant-scoped and account-owner-scoped tokens because developers frequently confuse which to use. The React SDK skill also covers the account-owner token since it's required for the SDK.
 - **`allowed-tools` includes WebFetch**: Both skills include WebFetch so Claude can check the live docs if a developer asks about something not covered in the skill content.
 - **Marketplace structure**: The `.claude-plugin/marketplace.json` with an `owner` field is required for the plugin to be installable via `/plugin marketplace add`. The `source: "./"` points to the plugin.json at the repo root.
+- **Cross-agent compatibility**: The `SKILL.md` format is compatible with both Claude Code plugins and the Vercel Skills ecosystem (`npx skills add`). The `allowed-tools` frontmatter is Claude-specific and ignored by other agents. No changes are needed to support both install methods.
+- **Two install methods, complementary**: `npx skills add` installs to `.claude/skills/` (and 41 other agent directories) for project-level auto-invocation. The Claude Code plugin install adds `/taxbit:api` and `/taxbit:react-sdk` slash commands. Both can coexist without conflict.
