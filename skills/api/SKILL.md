@@ -359,6 +359,31 @@ Error response format:
 }
 ```
 
+## Security
+
+Tax data is sensitive and subject to regulatory requirements (IRS IRC 6103, potentially GDPR for non-US persons). Apply these practices when writing server-side Taxbit integrations:
+
+**Credentials & Tokens**
+- Store `client_id`, `client_secret`, and `tenant_id` in environment variables or a secrets manager — never in source code.
+- Never log bearer tokens, even at debug level.
+- Implement proactive token refresh before the 24-hour expiry — don't wait for a 401.
+- Use the narrowest token scope: prefer account-owner-scoped tokens over tenant-scoped when the operation supports it.
+
+**PII & Tax Data**
+- Never log TINs (SSN, EIN, ITIN), tax form data, or personally identifiable information — not in application logs, error messages, or monitoring.
+- If you must store TINs temporarily (e.g., for validation), encrypt at rest and purge after use.
+- The API returns masked TINs (e.g., `***-**-0000`) — use masked values in any display or logging.
+- Be aware that tax documentation responses contain sensitive personal data (addresses, dates of birth, citizenship) — treat the entire response as PII.
+
+**Transport**
+- All API calls must use HTTPS (the base URLs enforce this).
+- Never proxy tenant credentials or bearer tokens through client-side code.
+- If forwarding account-owner tokens to a frontend, use httpOnly secure cookies or a server-side session — not localStorage or URL parameters.
+
+**Webhook Security**
+- If receiving webhooks, verify the request signature before processing.
+- Use HTTPS endpoints for webhook receivers.
+
 ## Integration Patterns
 
 When helping developers:

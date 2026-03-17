@@ -218,6 +218,30 @@ connect-src https://*.taxbit.com;
 
 Set `demoMode={true}` for local development without a backend. No bearer token needed. Simulates real-time TIN validation using the last digit of the entered TIN (0 = valid, 6 = invalid, others = pending).
 
+## Security
+
+The SDK handles tax documentation containing PII (TINs, addresses, dates of birth). Apply these practices in your React integration:
+
+**Token Handling**
+- Never fetch the account-owner token client-side — the `client_secret` must stay on the server.
+- Pass the token to your React app via a secure API endpoint, not through URL parameters or global variables.
+- Store tokens in memory (React state/context) or httpOnly secure cookies — never in localStorage or sessionStorage (vulnerable to XSS).
+- Implement proactive token refresh before the 24-hour expiry.
+
+**PII Protection**
+- Never log the `bearerToken` prop value, even at debug level.
+- Don't capture or log data from `onProgress`, `onSubmit`, or `onSuccess` callbacks that may contain tax form data.
+- If using `useTaxbit` to display status, only show the minimum needed (e.g., complete/incomplete) — don't expose raw `serverData` in the UI.
+- The `data` prop for adaptive mode may contain TINs and addresses — treat it as sensitive and don't persist it client-side.
+
+**Content Security Policy**
+- Add `connect-src https://*.taxbit.com;` to your CSP headers (see CSP section above).
+- Don't weaken CSP broadly (e.g., `connect-src *`) just to support the SDK.
+
+**Compliance Context**
+- Tax data is subject to IRS regulations (IRC 6103) and potentially GDPR for non-US persons — this is not ordinary user data.
+- Ensure your app's data retention and access policies account for the sensitivity of tax documentation.
+
 ## Common Integration Patterns
 
 1. **Token management** — fetch the account-owner-scoped token server-side, pass it to the React app, and refresh before expiry.
