@@ -361,43 +361,69 @@ Error response format:
 
 ## Security
 
-Tax data is sensitive and subject to regulatory requirements (IRS IRC 6103, potentially GDPR for non-US persons). Apply these practices when writing server-side Taxbit integrations:
+Tax data is sensitive and subject to regulatory requirements (IRS IRC 6103, potentially GDPR for non-US persons). Apply these practices when writing server-side Taxbit integrations.
 
-**Credentials & Tokens**
+### Credentials & Tokens
+
 - Store `client_id`, `client_secret`, and `tenant_id` in environment variables or a secrets manager — never in source code.
 - Never log bearer tokens, even at debug level.
 - Implement proactive token refresh before the 24-hour expiry — don't wait for a 401.
 - Use the narrowest token scope: prefer account-owner-scoped tokens over tenant-scoped when the operation supports it.
 
-**PII & Tax Data**
+### PII & Tax Data
+
 - Never log TINs (SSN, EIN, ITIN), tax form data, or personally identifiable information — not in application logs, error messages, or monitoring.
 - If you must store TINs temporarily (e.g., for validation), encrypt at rest and purge after use.
 - The API returns masked TINs (e.g., `***-**-0000`) — use masked values in any display or logging.
-- Be aware that tax documentation responses contain sensitive personal data (addresses, dates of birth, citizenship) — treat the entire response as PII.
+- Tax documentation responses contain sensitive personal data (addresses, dates of birth, citizenship) — treat the entire response as PII.
+- Do not add new data dumps, exports, or bulk data retrieval without explicit human review and sign-off.
 
-**Transport**
+### Transport & Infrastructure
+
 - All API calls must use HTTPS (the base URLs enforce this).
 - Never proxy tenant credentials or bearer tokens through client-side code.
 - If forwarding account-owner tokens to a frontend, use httpOnly secure cookies or a server-side session — not localStorage or URL parameters.
+- Webhook receivers must use HTTPS and verify request signatures before processing.
 
-**Webhook Security**
-- If receiving webhooks, verify the request signature before processing.
-- Use HTTPS endpoints for webhook receivers.
+### Secrets in Code & Configuration
 
-**Local Environment & Tool Safety**
+- Never hardcode secrets in Dockerfiles, docker-compose files, or CI pipeline configs. Use build secrets, environment injection, or a secrets manager.
+- API keys and tokens belong in GitHub Actions secrets or approved secret stores — never in CLAUDE.md, scripts, or committed config files.
+- Always add `.env` to `.gitignore`. Verify `.npmignore` or `files` in `package.json` excludes `.env` and config files with secrets before publishing.
+- When generating example code, always use obvious placeholders like `<YOUR_CLIENT_SECRET>` — never real or realistic-looking values.
 
-When generating code or helping developers, actively guard against secrets and PII leaking through local tools:
+### Git & Version Control
 
-- **Git** — never include `client_secret`, bearer tokens, TINs, or other secrets in code or config files that will be committed. Always add `.env` to `.gitignore`. When generating example code, use placeholder values like `<YOUR_CLIENT_SECRET>`, never real or realistic-looking values.
-- **Shell history** — avoid generating `curl` commands with inline secrets (e.g., `curl -H "Authorization: Bearer eyJ..."`). Instead, reference environment variables: `curl -H "Authorization: Bearer $TAXBIT_TOKEN"`.
-- **AI coding assistants** — be aware that code context is sent to LLM APIs. Never store secrets in source files where they could be included in AI context windows.
-- **Error reporting** — when integrating tools like Sentry or Datadog, configure them to scrub PII fields (TINs, addresses, tokens) from error payloads before transmission.
-- **Docker & CI/CD** — never hardcode secrets in Dockerfiles, docker-compose files, or CI pipeline configs. Use build secrets, environment injection, or a secrets manager.
-- **Browser dev tools** — bearer tokens are visible in the network tab. Warn developers not to export HAR files or share screenshots of network requests.
+- Never commit `client_secret`, bearer tokens, TINs, or other secrets. If a secret is accidentally committed, rotate it immediately — removing it from history is not sufficient.
+- All changes should go through PRs with required checks (lint, test, build). Agents should not commit directly to main or merge PRs without human review.
+- Never force-push to protected branches.
+
+### Shell & Command Safety
+
+- Avoid generating `curl` commands with inline secrets (e.g., `curl -H "Authorization: Bearer eyJ..."`). Reference environment variables instead: `curl -H "Authorization: Bearer $TAXBIT_TOKEN"`.
+- Prefer existing repo scripts (`npm run ...`) over ad-hoc bash commands when available.
+- Avoid chaining commands with `&&` or `;` in generated scripts — use separate commands for auditability.
+- Be aware that shell history (`~/.bash_history`, `~/.zsh_history`) persists commands containing secrets.
+
+### Monitoring & Error Reporting
+
+- When integrating tools like Sentry or Datadog, configure them to scrub PII fields (TINs, addresses, tokens) from error payloads before transmission.
+- If using centralized logging, ensure PII and tokens are stripped before ingestion.
+- Do not include tax data or PII in alert messages, Slack notifications, or dashboards.
+
+### Local Environment Risks
+
+- **AI coding assistants** — code context is sent to LLM APIs. Never store secrets in source files where they could be included in AI context windows. Only use IDE/agent tools approved by your organization for handling confidential data.
+- **Browser dev tools** — bearer tokens are visible in the network tab. Do not export HAR files or share screenshots of network requests.
 - **Clipboard** — avoid workflows that require copying secrets to the clipboard, as clipboard managers may persist them.
 - **File sync** — ensure `.env` files and config files with secrets are excluded from cloud sync tools (Dropbox, Google Drive, iCloud).
-- **Log aggregation** — if using centralized logging, ensure PII and tokens are stripped before ingestion.
-- **Package publishing** — when publishing to npm or other registries, verify `.npmignore` or `files` in `package.json` excludes `.env`, config files, and any files containing secrets.
+
+### Automation & Deployment Boundaries
+
+- Agents and automated tools must not deploy to production, modify infrastructure, or rotate secrets. Humans own deploys and infra changes.
+- For unattended or agentic runs, use restricted tool sets (e.g., read-only or edit-only) to limit blast radius.
+- If a generated script can be destructive (delete data, modify accounts, etc.), flag it clearly and require human review before execution.
+- Clearly document which secrets any automation or workflow uses and why.
 
 ## Integration Patterns
 
