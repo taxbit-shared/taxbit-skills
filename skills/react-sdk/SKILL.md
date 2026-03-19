@@ -44,11 +44,11 @@ function TaxFormPage({ bearerToken }) {
 
 ## Questionnaire Types
 
-| Value | Purpose |
-|-------|---------|
-| `"W-FORM"` | Collects W-9 (US persons) or W-8BEN/W-8BEN-E (non-US persons) for TIN validation |
-| `"DPS"` | Digital Platform Seller — DAC7 and similar tax collection |
-| `"SELF-CERT"` | CRS, CARF, DAC8 self-certification |
+| Value         | Purpose                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------- |
+| `"W-FORM"`    | Collects W-9 (US persons) or W-8BEN/W-8BEN-E (non-US persons) for IRS tax reporting and withholding compliance |
+| `"DPS"`       | Digital Platform Seller — DAC7 and similar tax collection                                                      |
+| `"SELF-CERT"` | CRS, CARF, DAC8 self-certification                                                                             |
 
 ## Authentication
 
@@ -78,25 +78,25 @@ Pass the `access_token` as the `bearerToken` prop. Tokens expire after 24 hours.
 
 ## TaxbitQuestionnaire Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `bearerToken` | string | Yes | Account-owner-scoped OAuth token |
-| `questionnaire` | string | Yes | `"W-FORM"`, `"DPS"`, or `"SELF-CERT"` |
-| `data` | object | No | Pre-populate form fields (see Adaptive Mode) |
-| `adaptiveMode` | string | No | `"full"` (default), `"skipLock"`, or `"skipEdit"` |
-| `language` | string | No | Locale code. Defaults: `"en-US"` (W-Form), `"en-GB"` (DPS/Self-Cert) |
-| `treatyClaims` | boolean | No | Enable US FDAP income treaty claims (W-Form only) |
-| `realTimeTinValidation` | boolean | No | Real-time IRS TIN/name validation |
-| `dateFormat` | string | No | `"mdy"` (default), `"dmy"`, or `"ymd"` |
-| `region` | string | No | `"US"` (default) or `"EU"` |
-| `demoMode` | boolean | No | Simulate without server calls |
-| `poweredByTaxbit` | boolean | No | Show "Powered by Taxbit" footer |
-| `loadingComponent` | JSX | No | Custom loading indicator |
-| `onProgress` | function | No | Called on step navigation |
-| `onSubmit` | function | No | Called when user clicks submit |
-| `onSuccess` | function | No | Called after successful API response |
-| `onError` | function | No | Called on submission error |
-| `onSettled` | function | No | Called after onSuccess or onError |
+| Prop                    | Type     | Required | Description                                                          |
+| ----------------------- | -------- | -------- | -------------------------------------------------------------------- |
+| `bearerToken`           | string   | Yes      | Account-owner-scoped OAuth token                                     |
+| `questionnaire`         | string   | Yes      | `"W-FORM"`, `"DPS"`, or `"SELF-CERT"`                                |
+| `data`                  | object   | No       | Pre-populate form fields (see Adaptive Mode)                         |
+| `adaptiveMode`          | string   | No       | `"full"` (default), `"skipLock"`, or `"skipEdit"`                    |
+| `language`              | string   | No       | Locale code. Defaults: `"en-US"` (W-Form), `"en-GB"` (DPS/Self-Cert) |
+| `treatyClaims`          | boolean  | No       | Enable US FDAP income treaty claims (W-Form only)                    |
+| `realTimeTinValidation` | boolean  | No       | Real-time IRS TIN/name validation                                    |
+| `dateFormat`            | string   | No       | `"mdy"` (default), `"dmy"`, or `"ymd"`                               |
+| `region`                | string   | No       | `"US"` (default) or `"EU"`                                           |
+| `demoMode`              | boolean  | No       | Simulate without server calls                                        |
+| `poweredByTaxbit`       | boolean  | No       | Show "Powered by Taxbit" footer                                      |
+| `loadingComponent`      | JSX      | No       | Custom loading indicator                                             |
+| `onProgress`            | function | No       | Called on step navigation                                            |
+| `onSubmit`              | function | No       | Called when user clicks submit                                       |
+| `onSuccess`             | function | No       | Called after successful API response                                 |
+| `onError`               | function | No       | Called on submission error                                           |
+| `onSettled`             | function | No       | Called after onSuccess or onError                                    |
 
 ## Adaptive Mode
 

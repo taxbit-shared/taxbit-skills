@@ -1,0 +1,9 @@
+# Claude Code local settings
+.claude/settings.local.json
+
+# Environment files
+.env
+.env.*
+
+# Skills CLI agent directories
+.agents/

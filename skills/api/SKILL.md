@@ -23,6 +23,7 @@ Taxbit provides REST APIs for cryptocurrency and digital asset tax compliance, i
 - **Gains & Inventory** — cost basis tracking, disposition methods, gain/loss calculations
 - **Form Items** — IRS form line items (1099-B, 1099-MISC, etc.)
 - **Documents** — generated tax documents and reports
+- **Filers** — legal entities responsible for filing tax forms with authorities
 - **Payers** — payer/filer entity management
 - **Real-Time TIN Validation** — validate TINs against IRS records
 
@@ -96,29 +97,29 @@ You can also use your external ID instead of `account_owner_id`:
 
 ## Account Owners
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/account-owners` | Create an account owner |
-| PATCH | `/account-owners/{id}` | Update an account owner |
-| GET | `/account-owners/{id}` | Retrieve an account owner |
-| GET | `/account-owners/{id}/us-tin-validation-status` | Get US TIN validation status |
+| Method | Path                                            | Description                  |
+| ------ | ----------------------------------------------- | ---------------------------- |
+| POST   | `/account-owners`                               | Create an account owner      |
+| PATCH  | `/account-owners/{id}`                          | Update an account owner      |
+| GET    | `/account-owners/{id}`                          | Retrieve an account owner    |
+| GET    | `/account-owners/{id}/us-tin-validation-status` | Get US TIN validation status |
 
 **Create/Update fields:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | string | Yes | Your system's unique identifier |
-| `account_owner_type` | enum | Yes | `INDIVIDUAL` or `ENTITY` |
-| `name` | string | No | Full name |
-| `email` | string | No | Email address |
-| `phone` | string | No | Phone number |
-| `birth_date` | date | No | ISO-8601 date |
-| `tin` | string | No | Tax identification number |
-| `tin_type` | enum | No | `US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `OTHER` |
-| `tax_country_code` | string | No | ISO 3166-1 alpha-2 country code |
-| `address` | object | No | `first_line`, `second_line`, `city`, `state_or_province`, `country`, `postal_code` |
-| `mailing_address` | object | No | Same structure as `address` |
-| `prefers_physical_mail` | boolean | No | Physical mail preference |
+| Field                   | Type    | Required | Description                                                                        |
+| ----------------------- | ------- | -------- | ---------------------------------------------------------------------------------- |
+| `id`                    | string  | Yes      | Your system's unique identifier                                                    |
+| `account_owner_type`    | enum    | Yes      | `INDIVIDUAL` or `ENTITY`                                                           |
+| `name`                  | string  | No       | Full name                                                                          |
+| `email`                 | string  | No       | Email address                                                                      |
+| `phone`                 | string  | No       | Phone number                                                                       |
+| `birth_date`            | date    | No       | ISO-8601 date                                                                      |
+| `tin`                   | string  | No       | Tax identification number                                                          |
+| `tin_type`              | enum    | No       | `US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `OTHER`                                  |
+| `tax_country_code`      | string  | No       | ISO 3166-1 alpha-2 country code                                                    |
+| `address`               | object  | No       | `first_line`, `second_line`, `city`, `state_or_province`, `country`, `postal_code` |
+| `mailing_address`       | object  | No       | Same structure as `address`                                                        |
+| `prefers_physical_mail` | boolean | No       | Physical mail preference                                                           |
 
 An `account` object can be nested inside account owner creation to create both simultaneously.
 
@@ -126,24 +127,24 @@ An `account` object can be nested inside account owner creation to create both s
 
 ## Accounts
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/accounts` | Create an account |
-| PATCH | `/accounts/{id}` | Update an account |
-| GET | `/accounts/{id}` | Retrieve an account |
+| Method | Path             | Description         |
+| ------ | ---------------- | ------------------- |
+| POST   | `/accounts`      | Create an account   |
+| PATCH  | `/accounts/{id}` | Update an account   |
+| GET    | `/accounts/{id}` | Retrieve an account |
 
 **Create fields:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | string | Yes | Your system's unique identifier |
-| `payer_id` | UUID | No | Payer/filer identifier |
-| `account_type` | enum | No | `US_IRA_TRADITIONAL`, `US_IRA_ROTH`, `US_IRA_SEP`, `US_IRA_SIMPLE` |
-| `establishment_date` | date | No | ISO-8601 account creation date |
-| `disposition_method` | enum | No | `HIFO`, `FIFO`, `LIFO`, `LOFO` |
-| `year_end_fair_market_value` | array | No | Objects with `year_end` (4-digit year) and `fair_market_value` (USD string) |
-| `secondary_account_owner_ids` | array | No | Additional owner identifiers |
-| `closest_intermediary_account_id` | string | No | Upstream intermediary reference |
+| Field                             | Type   | Required | Description                                                                 |
+| --------------------------------- | ------ | -------- | --------------------------------------------------------------------------- |
+| `id`                              | string | Yes      | Your system's unique identifier                                             |
+| `payer_id`                        | UUID   | No       | Payer/filer identifier                                                      |
+| `account_type`                    | enum   | No       | `US_IRA_TRADITIONAL`, `US_IRA_ROTH`, `US_IRA_SEP`, `US_IRA_SIMPLE`          |
+| `establishment_date`              | date   | No       | ISO-8601 account creation date                                              |
+| `disposition_method`              | enum   | No       | `HIFO`, `FIFO`, `LIFO`, `LOFO`                                              |
+| `year_end_fair_market_value`      | array  | No       | Objects with `year_end` (4-digit year) and `fair_market_value` (USD string) |
+| `secondary_account_owner_ids`     | array  | No       | Additional owner identifiers                                                |
+| `closest_intermediary_account_id` | string | No       | Upstream intermediary reference                                             |
 
 **Example response:**
 ```json
@@ -168,100 +169,100 @@ An `account` object can be nested inside account owner creation to create both s
 
 ## Transactions
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/transactions/external-id` | Send (create or update) a transaction |
-| GET | `/transactions/{external-id}/{id}` | Retrieve a transaction |
-| DELETE | `/transactions/{external-id}/{id}` | Delete a transaction |
-| GET | `/accounts/{id}/transactions` | List transactions for an account |
+| Method | Path                               | Description                           |
+| ------ | ---------------------------------- | ------------------------------------- |
+| POST   | `/transactions/external-id`        | Send (create or update) a transaction |
+| GET    | `/transactions/{external-id}/{id}` | Retrieve a transaction                |
+| DELETE | `/transactions/{external-id}/{id}` | Delete a transaction                  |
+| GET    | `/accounts/{id}/transactions`      | List transactions for an account      |
 
 Transactions use an **upsert** pattern — POST creates or updates based on your external ID.
 
 ### Transaction Aggregations
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/accounts/{id}/income` | Aggregate income data for a given time period |
+| Method | Path                    | Description                                   |
+| ------ | ----------------------- | --------------------------------------------- |
+| GET    | `/accounts/{id}/income` | Aggregate income data for a given time period |
 
 ## Tax Documentation
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/account-owners/{id}/tax-documentation-data/w-9` | Submit W-9 |
-| POST | `/account-owners/{id}/tax-documentation-data/w-8ben` | Submit W-8BEN |
-| POST | `/account-owners/{id}/tax-documentation-data/w-8ben-e` | Submit W-8BEN-E |
-| POST | `/account-owners/{id}/tax-documentation-data/self-certification` | Submit self-certification |
-| GET | `/account-owners/{id}/tax-documentation-data` | Retrieve tax documentation data |
-| GET | `/account-owners/{id}/tax-documentation-status` | Get documentation status |
-| POST | `/account-owners/{id}/tax-documentation-data/document` | Generate a PDF document |
-| GET | `/account-owners/{id}/tax-documentation-data/document/{document-id}` | Retrieve a generated document |
-| GET | `/tax-treaty-rates` | Get tax treaty withholding rates |
+| Method | Path                                                                 | Description                      |
+| ------ | -------------------------------------------------------------------- | -------------------------------- |
+| POST   | `/account-owners/{id}/tax-documentation-data/w-9`                    | Submit W-9                       |
+| POST   | `/account-owners/{id}/tax-documentation-data/w-8ben`                 | Submit W-8BEN                    |
+| POST   | `/account-owners/{id}/tax-documentation-data/w-8ben-e`               | Submit W-8BEN-E                  |
+| POST   | `/account-owners/{id}/tax-documentation-data/self-certification`     | Submit self-certification        |
+| GET    | `/account-owners/{id}/tax-documentation-data`                        | Retrieve tax documentation data  |
+| GET    | `/account-owners/{id}/tax-documentation-status`                      | Get documentation status         |
+| POST   | `/account-owners/{id}/tax-documentation-data/document`               | Generate a PDF document          |
+| GET    | `/account-owners/{id}/tax-documentation-data/document/{document-id}` | Retrieve a generated document    |
+| GET    | `/tax-treaty-rates`                                                  | Get tax treaty withholding rates |
 
 ### W-9 Submission
 
 Key request body fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `w9_tax_classification` | enum | `INDIVIDUAL`, `C_CORPORATION`, `S_CORPORATION`, `PARTNERSHIP`, `TRUST_ESTATE`, `LLC` variants, `SOLE_PROPRIETOR`, `OTHER` |
-| `tin` | string | Tax identification number |
-| `tin_type` | enum | `US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `OTHER` |
-| `address` | object | `first_line`, `second_line`, `city`, `state_or_province`, `postal_code`, `country` |
-| `exempt_payee_code` | string | Withholding exemption code |
-| `exempt_fatca_code` | string | FATCA exemption code |
-| `tax_residences` | array | Country, TIN, and status for each tax residence |
+| Field                   | Type   | Description                                                                                                               |
+| ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `w9_tax_classification` | enum   | `INDIVIDUAL`, `C_CORPORATION`, `S_CORPORATION`, `PARTNERSHIP`, `TRUST_ESTATE`, `LLC` variants, `SOLE_PROPRIETOR`, `OTHER` |
+| `tin`                   | string | Tax identification number                                                                                                 |
+| `tin_type`              | enum   | `US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `OTHER`                                                                         |
+| `address`               | object | `first_line`, `second_line`, `city`, `state_or_province`, `postal_code`, `country`                                        |
+| `exempt_payee_code`     | string | Withholding exemption code                                                                                                |
+| `exempt_fatca_code`     | string | FATCA exemption code                                                                                                      |
+| `tax_residences`        | array  | Country, TIN, and status for each tax residence                                                                           |
 
 ### W-8BEN Submission (Non-US Individuals)
 
 Key request body fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `permanent_address` | object | Permanent residence address |
-| `mailing_address` | object | Optional mailing address if different |
-| `tax_residences` | array | Tax residences with country, TIN, and exemption info |
-| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
-| `control_persons` | array | Individuals with ownership/control over entities |
+| Field               | Type   | Description                                          |
+| ------------------- | ------ | ---------------------------------------------------- |
+| `permanent_address` | object | Permanent residence address                          |
+| `mailing_address`   | object | Optional mailing address if different                |
+| `tax_residences`    | array  | Tax residences with country, TIN, and exemption info |
+| `completed_for`     | enum   | `ACCOUNT_HOLDER` or `REGARDED_OWNER`                 |
+| `control_persons`   | array  | Individuals with ownership/control over entities     |
 
 ### W-8BEN-E Submission (Non-US Entities)
 
 Key request body fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
-| `entity_type` | enum | Corporation, Partnership, Trust variants, Government entities, etc. |
-| `permanent_address` | object | Physical address |
-| `mailing_address` | object | Optional correspondence address |
-| `tax_residences` | array | Country-specific tax information with TIN |
-| `controlling_persons` | array | Name, address, citizenship, birth details, ownership percentage, role |
-| `limitation_on_benefits` | enum | LOB provisions (Government, Tax-exempt pension, etc.) |
-| `type_of_income` | enum | `ROYALTIES_OTHER` or `BUSINESS_PROFITS` |
-| `exemption_codes` | object | Payee and FATCA exemption codes |
+| Field                    | Type   | Description                                                           |
+| ------------------------ | ------ | --------------------------------------------------------------------- |
+| `completed_for`          | enum   | `ACCOUNT_HOLDER` or `REGARDED_OWNER`                                  |
+| `entity_type`            | enum   | Corporation, Partnership, Trust variants, Government entities, etc.   |
+| `permanent_address`      | object | Physical address                                                      |
+| `mailing_address`        | object | Optional correspondence address                                       |
+| `tax_residences`         | array  | Country-specific tax information with TIN                             |
+| `controlling_persons`    | array  | Name, address, citizenship, birth details, ownership percentage, role |
+| `limitation_on_benefits` | enum   | LOB provisions (Government, Tax-exempt pension, etc.)                 |
+| `type_of_income`         | enum   | `ROYALTIES_OTHER` or `BUSINESS_PROFITS`                               |
+| `exemption_codes`        | object | Payee and FATCA exemption codes                                       |
 
 ### Self-Certification Submission (CRS/CARF/DAC8)
 
 Key request body fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
-| `classification` | enum | `INDIVIDUAL`, `FINANCIAL_INSTITUTION` variants, `ACTIVE_NFE` variants, `PASSIVE_NFE` |
-| `account_type` | enum | `FINANCIAL_INSTITUTION`, `PASSIVE_NON_FINANCIAL_ENTITY`, `ACTIVE_NON_FINANCIAL_ENTITY` |
-| `entity_type` | enum | `TRUST`, `SIMILAR_TO_TRUST`, `OTHER` |
-| `tax_residences` | array | Country, TIN, `tin_not_required`, `tin_not_required_reason` (`NOT_ISSUED`, `NOT_REQUIRED`, `OTHER`) |
-| `address` | object | `first_line`, `second_line`, `city`, `state_or_province`, `postal_code`, `country` |
-| `controlling_persons` | array | See below |
-| `signature_capacity` | enum | `OWNER`, `AUTHORIZED_SIGNER`, `TRUSTEE`, `EXECUTOR`, `GUARDIAN`, `OTHER` |
+| Field                 | Type   | Description                                                                                         |
+| --------------------- | ------ | --------------------------------------------------------------------------------------------------- |
+| `completed_for`       | enum   | `ACCOUNT_HOLDER` or `REGARDED_OWNER`                                                                |
+| `classification`      | enum   | `INDIVIDUAL`, `FINANCIAL_INSTITUTION` variants, `ACTIVE_NFE` variants, `PASSIVE_NFE`                |
+| `account_type`        | enum   | `FINANCIAL_INSTITUTION`, `PASSIVE_NON_FINANCIAL_ENTITY`, `ACTIVE_NON_FINANCIAL_ENTITY`              |
+| `entity_type`         | enum   | `TRUST`, `SIMILAR_TO_TRUST`, `OTHER`                                                                |
+| `tax_residences`      | array  | Country, TIN, `tin_not_required`, `tin_not_required_reason` (`NOT_ISSUED`, `NOT_REQUIRED`, `OTHER`) |
+| `address`             | object | `first_line`, `second_line`, `city`, `state_or_province`, `postal_code`, `country`                  |
+| `controlling_persons` | array  | See below                                                                                           |
+| `signature_capacity`  | enum   | `OWNER`, `AUTHORIZED_SIGNER`, `TRUSTEE`, `EXECUTOR`, `GUARDIAN`, `OTHER`                            |
 
 **Controlling person fields:** `name`, `date_of_birth`, `address`, `mailing_address`, `country_of_birth`, `country_of_citizenship`, `city_of_birth`, `role` (`SETTLOR`, `TRUSTEE`, `PROTECTOR`, `BENEFICIARY`, `OWNER`, `SENIOR_MANAGING_OFFICIAL`, `OTHER`, plus `_EQUIVALENT` variants), `ownership_percentage`, `tax_residences`
 
 ### Tax Documentation Status Response
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `calculation_status` | enum | `in_progress` or `complete` |
-| `completed_for` | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
+| Field                | Type | Description                          |
+| -------------------- | ---- | ------------------------------------ |
+| `calculation_status` | enum | `in_progress` or `complete`          |
+| `completed_for`      | enum | `ACCOUNT_HOLDER` or `REGARDED_OWNER` |
 
 Status includes completion details across W-9/W-8, Digital Platform Seller, and Self-Certification form types, plus expiration dates (3 years from submission) and any issues requiring resubmission.
 
@@ -271,71 +272,116 @@ Status includes completion details across W-9/W-8, Digital Platform Seller, and 
 
 ## Gains
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/gains` | All gains — detailed cost bases, proceeds, and gains/losses (IRS Form 8949 / 1099-B line items) |
-| GET | `/gains/breakdown` | Short-term, long-term, and total gains/losses |
-| GET | `/gains/summary` | Total gains for a specified period |
+| Method | Path               | Description                                                                                     |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------------- |
+| GET    | `/gains`           | All gains — detailed cost bases, proceeds, and gains/losses (IRS Form 8949 / 1099-B line items) |
+| GET    | `/gains/breakdown` | Short-term, long-term, and total gains/losses                                                   |
+| GET    | `/gains/summary`   | Total gains for a specified period                                                              |
 
 ## Inventory
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/inventory` | Lots and summary for a single asset (requires `asset_id` or `asset_code`) |
-| GET | `/inventory/summaries` | Summary of total cost and quantity for each undisposed asset |
+| Method | Path                   | Description                                                               |
+| ------ | ---------------------- | ------------------------------------------------------------------------- |
+| GET    | `/inventory`           | Lots and summary for a single asset (requires `asset_id` or `asset_code`) |
+| GET    | `/inventory/summaries` | Summary of total cost and quantity for each undisposed asset              |
 
 Lots are sorted by disposition method order (HIFO, FIFO, LIFO, or LOFO).
 
 ### Transfer Lots
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/transfer-lots/transactions/{transaction-id}` | Create transfer lots with cost bases for a deposit transaction |
-| GET | `/transfer-lots/transactions/{transaction-id}` | Get transfer lots for a transaction |
-| DELETE | `/transfer-lots/transactions/{transaction-id}` | Delete transfer lots |
-| GET | `/transfer-lots/transactions` | Get transfer lots for multiple transactions |
+| Method | Path                                           | Description                                                    |
+| ------ | ---------------------------------------------- | -------------------------------------------------------------- |
+| POST   | `/transfer-lots/transactions/{transaction-id}` | Create transfer lots with cost bases for a deposit transaction |
+| GET    | `/transfer-lots/transactions/{transaction-id}` | Get transfer lots for a transaction                            |
+| DELETE | `/transfer-lots/transactions/{transaction-id}` | Delete transfer lots                                           |
+| GET    | `/transfer-lots/transactions`                  | Get transfer lots for multiple transactions                    |
 
 ## Disposition Methods
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/accounts/{id}/disposition-methods/history` | Create disposition methods for an account |
-| PATCH | `/accounts/{id}/disposition-methods/history/{history-id}` | Update a disposition method record |
-| DELETE | `/accounts/{id}/disposition-methods/history/{history-id}` | Delete a disposition method record |
-| GET | `/accounts/{id}/disposition-methods/history` | Get disposition methods for an account |
-| GET | `/filers/{id}/disposition-methods/history` | Get disposition methods for a filer |
+| Method | Path                                                      | Description                               |
+| ------ | --------------------------------------------------------- | ----------------------------------------- |
+| POST   | `/accounts/{id}/disposition-methods/history`              | Create disposition methods for an account |
+| PATCH  | `/accounts/{id}/disposition-methods/history/{history-id}` | Update a disposition method record        |
+| DELETE | `/accounts/{id}/disposition-methods/history/{history-id}` | Delete a disposition method record        |
+| GET    | `/accounts/{id}/disposition-methods/history`              | Get disposition methods for an account    |
+| GET    | `/filers/{id}/disposition-methods/history`                | Get disposition methods for a filer       |
 
 Valid disposition methods: `HIFO`, `FIFO`, `LIFO`, `LOFO`
 
 ## Form Items
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/users/{user-id}/form-items/{form-item-id}` | Get a form item |
-| PUT | `/users/{user-id}/form-items/{form-item-id}` | Upsert a form item |
-| DELETE | `/users/{user-id}/form-items/{form-item-id}` | Delete a form item |
-| POST | `/form-items/batch` | Upsert a collection of form items |
-| GET | `/users/{user-id}/form-items` | Get all form items for a user within a tax year |
-| GET | `/form-items/aggregates/{document-type}` | Aggregates by document type (total row count, proceeds, cost basis) |
+| Method | Path                                         | Description                                                         |
+| ------ | -------------------------------------------- | ------------------------------------------------------------------- |
+| GET    | `/users/{user-id}/form-items/{form-item-id}` | Get a form item                                                     |
+| PUT    | `/users/{user-id}/form-items/{form-item-id}` | Upsert a form item                                                  |
+| DELETE | `/users/{user-id}/form-items/{form-item-id}` | Delete a form item                                                  |
+| POST   | `/form-items/batch`                          | Upsert a collection of form items                                   |
+| GET    | `/users/{user-id}/form-items`                | Get all form items for a user within a tax year                     |
+| GET    | `/form-items/aggregates/{document-type}`     | Aggregates by document type (total row count, proceeds, cost basis) |
 
 ## Documents
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/accounts/{id}/tax-documents` | Get released tax documents for an account (latest of each type/year by default) |
+| Method | Path                           | Description                                                                     |
+| ------ | ------------------------------ | ------------------------------------------------------------------------------- |
+| GET    | `/accounts/{id}/tax-documents` | Get released tax documents for an account (latest of each type/year by default) |
 
 ## Real-Time TIN Validation
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/validations/us-tin` | Validate a US TIN and name |
-| GET | `/validations/us-tin/{validation-id}` | Get validation results |
+| Method | Path                                  | Description                |
+| ------ | ------------------------------------- | -------------------------- |
+| POST   | `/validations/us-tin`                 | Validate a US TIN and name |
+| GET    | `/validations/us-tin/{validation-id}` | Get validation results     |
 
 ## Payers
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/tenants/{tenant-id}/payers` | Get all payers for a tenant |
+| Method | Path                          | Description                 |
+| ------ | ----------------------------- | --------------------------- |
+| GET    | `/tenants/{tenant-id}/payers` | Get all payers for a tenant |
+
+## Filers
+
+A filer is the legal entity responsible for filing tax forms with tax authorities. Tenants may have multiple filers, with one designated as default. A filer can be created with only a name, but additional fields are required to generate specific form types.
+
+| Method | Path            | Description      |
+| ------ | --------------- | ---------------- |
+| POST   | `/filers`       | Create a filer   |
+| GET    | `/filers`       | Get all filers   |
+| GET    | `/filers/{id}`  | Get a filer      |
+| PATCH  | `/filers/{id}`  | Update a filer   |
+| DELETE | `/filers/{id}`  | Delete a filer   |
+
+**Create/Update fields:**
+
+| Field                          | Type    | Required | Description                                                                              |
+| ------------------------------ | ------- | -------- | ---------------------------------------------------------------------------------------- |
+| `name`                         | string  | Yes      | Legal name of the filer                                                                  |
+| `address`                      | object  | No       | `first_line`, `second_line`, `city`, `state_or_province`, `postal_code`, `country`       |
+| `ein`                          | string  | No       | Employer Identification Number (XX-XXXXXXX)                                              |
+| `tin`                          | string  | No       | Taxpayer Identification Number                                                           |
+| `tax_country_code`             | string  | No       | ISO 3166-1 alpha-2 country code                                                         |
+| `vat_id`                       | string  | No       | VAT identification number                                                                |
+| `vat_country`                  | string  | No       | ISO 3166-1 alpha-2 country code for VAT registration                                    |
+| `contact_name`                 | string  | No       | Contact person name                                                                      |
+| `contact_title`                | string  | No       | Contact person title                                                                     |
+| `contact_email`                | string  | No       | Contact email (email format)                                                             |
+| `contact_phone`                | string  | No       | Contact phone (E.164 format)                                                             |
+| `giin`                         | string  | No       | Global Intermediary Identification Number                                                |
+| `arn`                          | string  | No       | ATO Reference Number (12 numeric digits)                                                 |
+| `rtn`                          | string  | No       | Routing Transit Number                                                                   |
+| `disposition_method`           | enum    | No       | `HIFO`, `FIFO`, `LIFO`, `LOFO` (defaults to `FIFO`)                                     |
+| `form_1099_k_filer_type`       | enum    | No       | `PAYMENT_SETTLEMENT_ENTITY`, `ELECTRONIC_PAYMENT_FACILITATOR_OR_OTHER_THIRD_PARTY`       |
+| `form_1099_k_transaction_type` | enum    | No       | `PAYMENT_CARD_TRANSACTIONS`, `THIRD_PARTY_NETWORK_TRANSACTIONS`                          |
+| `form_1042_s_chapter_3_status` | enum    | No       | Chapter 3 withholding status                                                             |
+| `form_1042_s_chapter_4_status` | enum    | No       | Chapter 4 (FATCA) status                                                                 |
+| `cesop_psp_ids`                | array   | No       | CESOP Payment Service Provider identifiers (objects with `psp_id`, `country`, `description`) |
+| `cra_account_number`           | string  | No       | Canada Revenue Agency account number                                                     |
+| `cra_account_number_type`      | enum    | No       | `BN9`, `BN15`, `Trust`, `NR4`                                                            |
+| `cra_representative_identifier`| string  | No       | 7 alphanumeric characters                                                                |
+| `pse_name`                     | string  | No       | Payment Settlement Entity name                                                           |
+| `pse_telephone_number`         | string  | No       | PSE phone number                                                                         |
+| `dac7_receiving_member_state`  | enum    | No       | EU member state code (AT, BE, BG, etc.)                                                  |
+
+**Response** includes all submitted fields plus system-generated: `id` (UUID), `tenant_id` (UUID), `date_created`, `date_modified`, `is_default` (boolean). The `vat_id` is returned masked as `vat_id_masked`.
 
 ## Rate Limits
 
