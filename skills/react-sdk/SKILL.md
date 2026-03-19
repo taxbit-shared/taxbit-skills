@@ -242,6 +242,18 @@ The SDK handles tax documentation containing PII (TINs, addresses, dates of birt
 - Tax data is subject to IRS regulations (IRC 6103) and potentially GDPR for non-US persons — this is not ordinary user data.
 - Ensure your app's data retention and access policies account for the sensitivity of tax documentation.
 
+**Local Environment & Tool Safety**
+
+When generating code or helping developers, actively guard against secrets and PII leaking through local tools:
+
+- **Git** — never commit bearer tokens, TINs, or the `data` prop values used in adaptive mode. Always add `.env` to `.gitignore`. Use placeholder values like `<BEARER_TOKEN>` in example code.
+- **AI coding assistants** — be aware that code context is sent to LLM APIs. Never store tokens or PII in source files where they could be included in AI context windows.
+- **Browser dev tools** — bearer tokens are visible in the network tab of developer tools. Warn developers not to export HAR files or share screenshots of network requests containing tokens.
+- **Error reporting** — when integrating tools like Sentry or Datadog, configure them to scrub bearer tokens and any PII from the SDK's callbacks (`onError`, `onSubmit`) before transmission.
+- **Clipboard** — avoid workflows that require copying tokens to the clipboard, as clipboard managers may persist them.
+- **Shell history** — if developers test token endpoints with `curl`, ensure they reference environment variables (`$TAXBIT_TOKEN`) rather than inline secrets that persist in shell history.
+- **Package publishing** — when publishing to npm, verify `.npmignore` or `files` in `package.json` excludes `.env` and any files containing tokens or test PII.
+
 ## Common Integration Patterns
 
 1. **Token management** — fetch the account-owner-scoped token server-side, pass it to the React app, and refresh before expiry.

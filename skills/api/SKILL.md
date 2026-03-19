@@ -384,6 +384,21 @@ Tax data is sensitive and subject to regulatory requirements (IRS IRC 6103, pote
 - If receiving webhooks, verify the request signature before processing.
 - Use HTTPS endpoints for webhook receivers.
 
+**Local Environment & Tool Safety**
+
+When generating code or helping developers, actively guard against secrets and PII leaking through local tools:
+
+- **Git** — never include `client_secret`, bearer tokens, TINs, or other secrets in code or config files that will be committed. Always add `.env` to `.gitignore`. When generating example code, use placeholder values like `<YOUR_CLIENT_SECRET>`, never real or realistic-looking values.
+- **Shell history** — avoid generating `curl` commands with inline secrets (e.g., `curl -H "Authorization: Bearer eyJ..."`). Instead, reference environment variables: `curl -H "Authorization: Bearer $TAXBIT_TOKEN"`.
+- **AI coding assistants** — be aware that code context is sent to LLM APIs. Never store secrets in source files where they could be included in AI context windows.
+- **Error reporting** — when integrating tools like Sentry or Datadog, configure them to scrub PII fields (TINs, addresses, tokens) from error payloads before transmission.
+- **Docker & CI/CD** — never hardcode secrets in Dockerfiles, docker-compose files, or CI pipeline configs. Use build secrets, environment injection, or a secrets manager.
+- **Browser dev tools** — bearer tokens are visible in the network tab. Warn developers not to export HAR files or share screenshots of network requests.
+- **Clipboard** — avoid workflows that require copying secrets to the clipboard, as clipboard managers may persist them.
+- **File sync** — ensure `.env` files and config files with secrets are excluded from cloud sync tools (Dropbox, Google Drive, iCloud).
+- **Log aggregation** — if using centralized logging, ensure PII and tokens are stripped before ingestion.
+- **Package publishing** — when publishing to npm or other registries, verify `.npmignore` or `files` in `package.json` excludes `.env`, config files, and any files containing secrets.
+
 ## Integration Patterns
 
 When helping developers:
