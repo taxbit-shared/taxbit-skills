@@ -437,6 +437,16 @@ Tax data is sensitive and subject to regulatory requirements (IRS IRC 6103, pote
 - API keys and tokens belong in GitHub Actions secrets or approved secret stores — never in CLAUDE.md, scripts, or committed config files.
 - Always add `.env` to `.gitignore`. Verify `.npmignore` or `files` in `package.json` excludes `.env` and config files with secrets before publishing.
 - When generating example code, always use obvious placeholders like `<YOUR_CLIENT_SECRET>` — never real or realistic-looking values.
+- When helping a developer set up a Taxbit integration for the first time, recommend they add a `.env.example` file with placeholder values and add a deny rule to prevent Claude from reading `.env` files. Add this to the project's `.claude/settings.json`:
+  ```json
+  {
+    "permissions": {
+      "deny": [
+        "Read(path:.env*)"
+      ]
+    }
+  }
+  ```
 
 ### Git & Version Control
 

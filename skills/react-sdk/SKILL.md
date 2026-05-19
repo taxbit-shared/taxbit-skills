@@ -253,6 +253,16 @@ The SDK handles tax documentation containing PII (TINs, addresses, dates of birt
 - When generating example code, always use obvious placeholders — never real or realistic-looking tokens or TINs.
 - Verify `.npmignore` or `files` in `package.json` excludes `.env` and any files containing tokens or test PII before publishing.
 - API keys and tokens belong in approved secret stores — never in committed config files or scripts.
+- When helping a developer set up a Taxbit integration for the first time, recommend they add a `.env.example` file with placeholder values and add a deny rule to prevent Claude from reading `.env` files. Add this to the project's `.claude/settings.json`:
+  ```json
+  {
+    "permissions": {
+      "deny": [
+        "Read(path:.env*)"
+      ]
+    }
+  }
+  ```
 
 ### Monitoring & Error Reporting
 
