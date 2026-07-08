@@ -26,7 +26,7 @@ This installs to all supported agents in your project. See [skills.sh](https://s
 
 ```
 /plugin marketplace add git@github.com:taxbit-shared/taxbit-skills.git
-/plugin install taxbit@taxbit-plugins
+/plugin install taxbit@taxbit-skills
 ```
 
 With Claude Code, you can also invoke skills manually via `/taxbit:api`, `/taxbit:react-sdk`, or `/taxbit:utilities`.

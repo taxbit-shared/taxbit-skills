@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Cross-agent support via Vercel Skills CLI (`npx skills add taxbit-shared/taxbit-skills`) — works with 42 agents including Cursor, GitHub Copilot, Windsurf, and more
 - Install method comparison table in README
 
+### Changed
+- Renamed the plugin marketplace from `taxbit-plugins` to `taxbit-skills` for consistency with the repo name. The Claude Code install command is now `/plugin install taxbit@taxbit-skills`. Any existing users who added the marketplace under the old name must remove and re-add it: `/plugin marketplace remove taxbit-plugins` then `/plugin marketplace add git@github.com:taxbit-shared/taxbit-skills.git`.
+
 ## [0.3.0] - 2026-07-08
 
 ### Added
