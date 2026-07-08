@@ -15,7 +15,7 @@ An agent skills package that provides three skills for integrating with the Taxb
 ```
 CLAUDE.md                            # This file — instructions for regenerating content
 plugin.json                          # Plugin manifest (name: "taxbit")
-.claude-plugin/marketplace.json      # Marketplace manifest (name: "taxbit-plugins")
+.claude-plugin/marketplace.json      # Marketplace manifest (name: "taxbit-skills")
 README.md                            # User-facing documentation
 skills/
   api/SKILL.md                       # Taxbit REST API skill
@@ -37,7 +37,7 @@ npx skills add taxbit-shared/taxbit-skills
 ### Claude Code Only
 ```
 /plugin marketplace add git@github.com:taxbit-shared/taxbit-skills.git
-/plugin install taxbit@taxbit-plugins
+/plugin install taxbit@taxbit-skills
 ```
 
 ## Content Generation
