@@ -7,7 +7,7 @@
     {
       "name": "taxbit",
       "source": "./",
-      "description": "Skills for integrating with the Taxbit API and React SDK"
+      "description": "Skills for integrating with the Taxbit API, React SDK, and Utilities"
     }
   ]
 }
