@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Install method comparison table in README
 - **React SDK:** expanded "CSS / Styling & Customization" section — full `taxbit-*` class reference (authoritative SDK class map grouped by DOM nesting: root/page chrome, sections, field rows, form controls, address composite, buttons, status/messages/badges, state modifiers), the dynamic class families (`taxbit-form-*`/`taxbit-question-*`/`taxbit-error-message-*`) documented as a kebab-case naming rule with the aria-`id` caveat, the "no CSS variables, override the classes" contract, the four bundled stylesheets (incl. the previously-undocumented `index.css`), default design tokens, a specificity note, and override examples. Emphasizes that the shipped CSS is minimal/unopinionated and meant to be replaced.
 - **CLAUDE.md:** regeneration recipe for the styling section, sourced from both the package's bundled `style/*.css` (styled classes + defaults) and the SDK component source (authoritative overridable class map, incl. structural-only and dynamic classes)
+- Marketplace manifest `description`, so the marketplace listing explains what it offers
 
 ### Changed
 - **React SDK:** documented version bumped `4.0.0` → `4.1.0`

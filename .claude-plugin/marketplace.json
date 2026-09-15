@@ -3,6 +3,7 @@
   "owner": {
     "name": "TaxBit"
   },
+  "description": "Taxbit's official agent skills for building on the Taxbit platform: REST API, React SDK, and utilities.",
   "plugins": [
     {
       "name": "taxbit",
