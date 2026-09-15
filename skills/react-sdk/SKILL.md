@@ -517,7 +517,7 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 
 Address subfields do **not** have a fixed class list. They are generated at runtime from the field key as `` `taxbit-${key}` ``, which is why you will see classes like `.taxbit-city` and `.taxbit-postal-code` in the DOM. Inspect the rendered markup for the exact keys in your flow rather than coding against a list.
 
-> Earlier revisions of this skill documented `.taxbit-address-line-1`, `.taxbit-address-line-2`, `.taxbit-address-region`, and `.taxbit-address-country`. **Those classes appear in no shipped bundle.** They were an error. Do not target them.
+> `.taxbit-address-line-1`, `.taxbit-address-line-2`, `.taxbit-address-region`, and `.taxbit-address-country` are **declared in the SDK source but unused**, so the bundler drops them and they appear in no shipped bundle through 5.0.0. Do not target them today. They would become real if that component is ever wired in.
 
 **Buttons**
 

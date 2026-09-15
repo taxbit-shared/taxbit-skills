@@ -31,8 +31,9 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - **API:** removed the false statement that no W-8IMY submission endpoint exists. It does, at a non-standard documentation slug, which is how the error went unnoticed.
 - **API:** corrected the transaction single-item paths from `/transactions/{id}` to `/transactions/external-id/{id}`
-- **API:** form item aggregates accept `1099_DA` as well as `1099_B`, and the batch endpoint returns `errors[]` with an `index`, not `failures[]`
-- **React SDK:** removed seven classes that appear in no shipped bundle and were documented in error — the four `taxbit-address-*` subfield classes plus `taxbit-progress-status`, `taxbit-input-status-footer`, and `taxbit-textarea`. Address subfields are generated at runtime from the field key instead. The full class reference now matches the bundle exactly.
+- **API:** form item aggregates accept `1099_DA` as well as `1099_B`
+- **API:** documented the shape of the batch upsert's `failures[]` items, which carry `form_item` and a string `error` and no positional index
+- **React SDK:** the class reference now matches the shipped bundle exactly. Removed `taxbit-progress-status`, `taxbit-input-status-footer`, and `taxbit-textarea`, which appear nowhere in the package. The four `taxbit-address-*` subfield classes are now marked as declared in SDK source but unused, so absent from every bundle through 5.0.0; address subfields are generated at runtime from the field key instead.
 
 ## [0.3.0] - 2026-07-08
 
