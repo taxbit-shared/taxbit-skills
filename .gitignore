@@ -7,3 +7,6 @@
 
 # Skills CLI agent directories
 .agents/
+
+# macOS
+.DS_Store

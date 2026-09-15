@@ -19,12 +19,13 @@ Taxbit provides REST APIs for cryptocurrency and digital asset tax compliance, i
 - **Account Owners** — individuals or entities subject to tax reporting
 - **Accounts** — financial accounts associated with account owners
 - **Transactions** — trades, transfers, income, staking, and other taxable events
-- **Tax Documentation** — W-9, W-8BEN, W-8BEN-E (and W-8IMY / self-certification data) forms
+- **Tax Documentation** — W-9, W-8BEN, W-8BEN-E, W-8IMY, and self-certification forms
 - **Gains & Inventory** — cost basis tracking, disposition methods, gain/loss calculations
 - **Form Items** — IRS form line items (1099-B, 1099-DA, 1099-MISC, etc.)
 - **Documents** — generated tax documents and reports
 - **Reports** — asynchronous bulk report generation (e.g. inventory summary)
 - **Filers** — legal entities responsible for filing tax forms with authorities
+- **Withholding** — Austrian KESt capital gains withholding balances
 - **Real-Time TIN Validation** — validate TINs against IRS records
 - **Webhooks** — event notifications for validation and status changes
 
@@ -147,7 +148,7 @@ Content-Type: application/json
 | `id`                              | string | Yes      | Your system's unique identifier                                             |
 | `account_owner_id`                | string | Yes      | Reference to an existing account owner                                      |
 | `filer_id`                        | UUID   | No       | Filer identifier                                                            |
-| `account_type`                    | enum   | No       | `US_IRA_TRADITIONAL`, `US_IRA_ROTH`, `US_IRA_SEP`, `US_IRA_SIMPLE`, `DEPOSITORY`, `DEPOSITORY_SEMP_ONLY`, `CUSTODIAL`, `CASH_VALUE_INSURANCE_CONTRACT`, `ANNUITY_CONTRACT`, `INVESTMENT_ENTITY_ACCOUNT` |
+| `account_type`                    | enum   | No       | 13 values: `US_IRA_TRADITIONAL`, `US_IRA_ROTH`, `US_IRA_SIMPLE`, `US_IRA_SEP`, `US_EMPLOYER_PLAN`, `US_ANNUITY_INSURANCE`, `US_TRUMP_ACCOUNT`, `DEPOSITORY`, `DEPOSITORY_SEMP_ONLY`, `CUSTODIAL`, `CASH_VALUE_INSURANCE_CONTRACT`, `ANNUITY_CONTRACT`, `INVESTMENT_ENTITY_ACCOUNT` |
 | `establishment_date`              | date   | No       | ISO-8601 account creation date                                              |
 | `closure_date`                    | date   | No       | ISO-8601 account closure date                                               |
 | `disposition_method`              | enum   | No       | `HIFO`, `FIFO`, `LIFO`, `LOFO`                                              |
@@ -160,11 +161,13 @@ Content-Type: application/json
 | Method | Path                          | Description                           |
 | ------ | ----------------------------- | ------------------------------------- |
 | POST   | `/transactions/external-id`   | Send (create or update) a transaction |
-| GET    | `/transactions/{id}`          | Retrieve a transaction by your ID     |
-| DELETE | `/transactions/{id}`          | Delete a transaction                  |
+| GET    | `/transactions/external-id/{id}` | Retrieve a transaction by your ID  |
+| DELETE | `/transactions/external-id/{id}` | Delete a transaction               |
 | GET    | `/accounts/{id}/transactions` | List transactions for an account      |
 
-Transactions use an **upsert** pattern. `POST /transactions/external-id` is a static path — the external transaction id goes in the request body as `id`, **not** in the URL.
+Transactions use an **upsert** pattern. `POST /transactions/external-id` is a static path — the external transaction id goes in the request body as `id`, **not** in the URL. The GET and DELETE singles **do** take it in the path.
+
+**The write and read `type` vocabularies differ.** Submissions use the lowercase list below. Responses return a different, UPPERCASE set: `TRADE`, `BUY`, `SELL`, `TRANSFER`, `TRANSFER-IN`, `TRANSFER-OUT`, `INTERNAL-TRANSFER`, `ACQUISITION`, `FOREX`, `INCOME`, `EXPENSE`, `GIFT-RECEIVED`, `GIFT-SENT`, `INVALID`, `REWARD`, `ADJUSTMENT`, `STAKE`, `UNSTAKE`, `COST-BASIS-TRANSFER`. Do not round-trip a response `type` back into a submission. Subtypes are the same lowercase list in both directions.
 
 **Key request fields:**
 
@@ -205,15 +208,20 @@ Every submission is **immutable** — each POST creates a new record. Two path s
 | POST   | `/account-owners/{id}/tax-documentation-data/w-9`                    | Submit W-9                       |
 | POST   | `/account-owners/{id}/tax-documentation-data/w-8ben`                 | Submit W-8BEN                    |
 | POST   | `/account-owners/{id}/tax-documentation-data/w-8ben-e`               | Submit W-8BEN-E                  |
+| POST   | `/account-owners/{id}/tax-documentation-data/w-8imy`                 | Submit W-8IMY                    |
 | POST   | `/account-owners/{id}/tax-documentation-data/self-certification`     | Submit self-certification        |
 | GET    | `/account-owners/{id}/tax-documentation-data`                        | Retrieve tax documentation data  |
 | GET    | `/account-owners/{id}/tax-documentation-status`                      | Get documentation status         |
 | POST   | `/account-owners/{id}/tax-documentation-data/document`               | Generate a PDF document          |
 | GET    | `/account-owners/{id}/tax-documentation-data/document/{document-id}` | Retrieve a generated document    |
-| GET    | `/tax-documentation-data`, `/tax-documentation-status`, `POST /tax-documentation-data/document` | Token-scoped variants (no `id`) |
+| GET    | `/tax-documentation-data`, `/tax-documentation-status`, `POST /tax-documentation-data/document`, `GET /tax-documentation-data/document/{document-id}` | Token-scoped variants (no `id`) |
 | GET    | `/tax-treaty-rates`                                                  | Get tax treaty withholding rates |
 
-All form POSTs return **201** and mirror the submitted body. There is **no W-8IMY submission endpoint** — W-8IMY appears only as a returned type in `GET .../tax-documentation-data` and as a valid `document_type` for PDF generation.
+All form POSTs return **201** and mirror the submitted body.
+
+**W-8IMY has a submission endpoint.** Its reference page lives at the non-standard slug `reference/taxdocumentationcontroller_submitw8imy.md`, which is why earlier revisions of this skill wrongly claimed no such endpoint existed. The body is `W8ImySubmissionDto`: 76 properties, but only `irs_version` is required. Notable fields are a 9-value `tax_classification`, `ein_type` (`EIN`, `QI_EIN`, `WP_EIN`, `WT_EIN`), its own **26-value** `fatca_classification` (a different set from W-8BEN-E's 32), `giin` with `giin_applied_for` and `sponsoring_entity_or_trustee_name`, `nonreporting_iga_country_model` and `nonreporting_iga_trustee_type`, `securities_market`, `affiliate_entity_name`, and the full IRS checkbox range `box_14` through `box_42` (booleans, plus string dates `box_35_date_of_formation` and `box_36_date_of_filing`).
+
+**W-8BEN-E caveat:** its FATCA block and all `box_*` fields exist **only** on the `irs_version` variant, not on the substitute-form variant.
 
 ### W-9 Submission
 
@@ -313,7 +321,9 @@ POST body: `effective_datetime` (optional), `transfer_lots[]` with `quantity`, `
 | GET    | `/accounts/{id}/disposition-methods/history`              | Get disposition methods for an account    |
 | GET    | `/filers/{id}/disposition-methods/history`                | Get disposition methods for a filer       |
 
-Body/response items: `disposition_method` (`HIFO`/`FIFO`/`LIFO`/`LOFO`), `effective_datetime`, `id`. POST returns **201**.
+Body/response items: `disposition_method`, `effective_datetime`, `id`. POST returns **201**.
+
+**The accepted method list differs by endpoint.** These history endpoints accept only `HIFO`, `FIFO`, `LIFO`, `LOFO`. `POST /accounts` and `PATCH /accounts/{id}` additionally accept `AUSTRIA`. `SPECID` is neither — it is selected per transaction via `disposition_method: "SPECID"` together with `inventory_lots`.
 
 ## Form Items
 
@@ -324,11 +334,11 @@ Body/response items: `disposition_method` (`HIFO`/`FIFO`/`LIFO`/`LOFO`), `effect
 | DELETE | `/users/{user-id}/form-items/{form-item-id}` | Delete a form item                                                  |
 | POST   | `/form-items/batch`                          | Upsert a collection of form items (max 100)                         |
 | GET    | `/users/{user-id}/form-items`                | Get all form items for a user within a tax year                     |
-| GET    | `/form-items/aggregates/{document-type}`     | Aggregates by document type (only `1099_B`)                         |
+| GET    | `/form-items/aggregates/{document-type}`     | Aggregates by document type (`1099_B` or `1099_DA` only)            |
 
 - `GET /users/{user-id}/form-items` requires `tax_year` and `document_type` (`1099_B`, `1099_INT`, `1099_DIV`, `1099_DA`, `1099_MISC`, `1099_NEC`, `1099_K`, `1099_R`, `5498`); `1099_B` supports `continuation_key`.
-- `POST /form-items/batch` returns `{ successes[], failures[] }` (no `data` envelope).
-- `GET /form-items/aggregates/1099_B` returns `record_count`, `proceeds`, `cost_basis`; optional date-range params.
+- `POST /form-items/batch` is partial-success and returns `{ successes[], failures[] }` (no `data` envelope). `successes[]` items hold `form_item`. `failures[]` items hold `form_item` plus a string `error` giving the reason, e.g. `"Invalid 1099b_item object."`. There is no positional `index` — match failures back to your input by `form_item.id`.
+- Aggregates return `document_type`, `record_count`, `proceeds`, `cost_basis`. Filter by date range **or** disposed-date range, never both.
 
 ## Documents
 
@@ -390,6 +400,29 @@ A filer is the legal entity responsible for filing tax forms with tax authoritie
 | `dac7_receiving_member_state`  | enum    | No       | EU member state code (27 values: AT, BE, BG, HR, CY, CZ, DK, EE, FI, FR, DE, GR, HU, IE, IT, LV, LT, LU, MT, NL, PL, PT, RO, SK, SI, ES, SE) |
 
 **Response** includes all submitted fields plus system-generated: `id` (UUID), `tenant_id` (UUID), `date_created`, `date_modified`, `is_default`, `vat_id_masked`.
+
+## Withholding
+
+| Method | Path                    | Description                                          |
+| ------ | ----------------------- | ---------------------------------------------------- |
+| GET    | `/withholding/austria`  | Austrian KESt withholding balance for an account     |
+
+Applies only to accounts whose disposition method is `AUSTRIA`. Calling it for any other account returns **409**.
+
+**Query params:** `account_id` (required unless `x-user-id` is supplied), `tax_year` (Europe/Vienna calendar year), `transaction_id` (your external id).
+
+**Response:**
+- `summary.year_to_date_balance` — EUR withholding for the year to date, after loss compensation
+- `summary.latest_transaction_datetime` — nullable, null before any Austria calculation has run
+- `transaction` — nullable. Populated only when `transaction_id` was supplied **and** that transaction has been calculated. Carries `change_in_balance`, `transaction_datetime`, `transaction_id`
+- `tax_year` — the calendar year the summary covers
+- `fiat_asset` — nullable denomination asset
+
+The **27.5% KESt rate is already applied** to the returned amounts. There is no discrete rate field.
+
+**Polling pattern:** after submitting a transaction, poll with `transaction_id` until `transaction` is non-null, then release funds. Do not use a `calculation_status` field — the Austria guide shows one in an example, but it does not exist in the actual response schema. `transaction !== null` is the completion signal.
+
+**Gain types under AUSTRIA.** `gain_type` carries 7 values, not 2: `long-term`, `short-term`, `at-new-stock`, `at-user-basis`, `at-missing-basis`, `at-old-stock-long-term`, `at-old-stock-short-term`. The last five are Austrian inventory pools, and one disposal can emit a row per pool.
 
 ## Real-Time TIN Validation
 
