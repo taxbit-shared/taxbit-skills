@@ -12,10 +12,27 @@ All notable changes to this project will be documented in this file.
 - **React SDK:** expanded "CSS / Styling & Customization" section — full `taxbit-*` class reference (authoritative SDK class map grouped by DOM nesting: root/page chrome, sections, field rows, form controls, address composite, buttons, status/messages/badges, state modifiers), the dynamic class families (`taxbit-form-*`/`taxbit-question-*`/`taxbit-error-message-*`) documented as a kebab-case naming rule with the aria-`id` caveat, the "no CSS variables, override the classes" contract, the four bundled stylesheets (incl. the previously-undocumented `index.css`), default design tokens, a specificity note, and override examples. Emphasizes that the shipped CSS is minimal/unopinionated and meant to be replaced.
 - **CLAUDE.md:** regeneration recipe for the styling section, sourced from both the package's bundled `style/*.css` (styled classes + defaults) and the SDK component source (authoritative overridable class map, incl. structural-only and dynamic classes)
 - Marketplace manifest `description`, so the marketplace listing explains what it offers
+- **API:** new **Withholding** section covering `GET /withholding/austria` — Austrian KESt balances, the `transaction_id` polling pattern, the nullable `transaction` completion signal, and the note that the 27.5% rate is already applied
+- **API:** the **W-8IMY submission endpoint** `POST /account-owners/{id}/tax-documentation-data/w-8imy`, including `ein_type`, its distinct 26-value `fatca_classification`, and the `box_14`–`box_42` checkbox range
+- **API:** the seven `gain_type` values, five of which are Austrian inventory pools
+- **React SDK:** a "What Changed in 5.0.0" section covering the four breaking changes, plus the new `fatca` and `typesOfIncome` props and the `RESIDENCIES` questionnaire type
+- **CLAUDE.md:** regeneration guidance that the SDK's own changelog misattributes CSS breaking changes, that `llms.txt` no longer lists changelogs, and that the utilities `.d.ts` surface is wider than the runtime exports
 
 ### Changed
-- **React SDK:** documented version bumped `4.0.0` → `4.1.0`
+- **React SDK:** documented version bumped `4.0.0` → `5.0.0`
+- **API:** transaction read and write `type` vocabularies documented as separate lists, since responses return UPPERCASE values that cannot be resubmitted
+- **API:** `account_type` corrected to its full 13 values, adding `US_EMPLOYER_PLAN`, `US_ANNUITY_INSURANCE`, and `US_TRUMP_ACCOUNT`
+- **API:** disposition method lists split by endpoint — the history endpoints take four values, the account endpoints also take `AUSTRIA`, and `SPECID` is per-transaction only
 - Renamed the plugin marketplace from `taxbit-plugins` to `taxbit-skills` for consistency with the repo name. The Claude Code install command is now `/plugin install taxbit@taxbit-skills`. Any existing users who added the marketplace under the old name must remove and re-add it: `/plugin marketplace remove taxbit-plugins` then `/plugin marketplace add git@github.com:taxbit-shared/taxbit-skills.git`.
+
+### Removed
+- **The `taxbit:utilities` skill has been removed.** `@taxbit/utilities` is an internal dependency of the React SDK rather than a supported public surface, so this package no longer documents its lookups, validators, or types. The React SDK skill now presents `ClientTaxDocumentation` and `ClientTaxResidency` as imports from `@taxbit/react-sdk`. Users who invoked `/taxbit:utilities` will no longer find it.
+
+### Fixed
+- **API:** removed the false statement that no W-8IMY submission endpoint exists. It does, at a non-standard documentation slug, which is how the error went unnoticed.
+- **API:** corrected the transaction single-item paths from `/transactions/{id}` to `/transactions/external-id/{id}`
+- **API:** form item aggregates accept `1099_DA` as well as `1099_B`, and the batch endpoint returns `errors[]` with an `index`, not `failures[]`
+- **React SDK:** removed seven classes that appear in no shipped bundle and were documented in error — the four `taxbit-address-*` subfield classes plus `taxbit-progress-status`, `taxbit-input-status-footer`, and `taxbit-textarea`. Address subfields are generated at runtime from the field key instead. The full class reference now matches the bundle exactly.
 
 ## [0.3.0] - 2026-07-08
 

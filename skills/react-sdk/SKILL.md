@@ -1,6 +1,6 @@
 ---
 name: react-sdk
-description: Helps developers integrate the Taxbit React SDK for collecting tax documentation forms (W-9, W-8BEN, W-8BEN-E, W-8IMY, self-certification, DAC7/DPS, CRS, CARF, DAC8) and curing W-8 validation issues. Use when writing React code that imports @taxbit/react-sdk, renders TaxbitQuestionnaire, TaxbitCuringDocumentation, or TaxbitTaxResidencies, uses the useTaxbit hook, or handles tax form collection UI. For lookups/validators/types (@taxbit/utilities), use the utilities skill.
+description: Helps developers integrate the Taxbit React SDK for collecting tax documentation forms (W-9, W-8BEN, W-8BEN-E, W-8IMY, self-certification, DAC7/DPS, CRS, CARF, DAC8) and curing W-8 validation issues. Use when writing React code that imports @taxbit/react-sdk, renders TaxbitQuestionnaire, TaxbitCuringDocumentation, or TaxbitTaxResidencies, uses the useTaxbit hook, or handles tax form collection UI.
 allowed-tools:
   - Read
   - Grep
@@ -16,9 +16,22 @@ You are a Taxbit React SDK integration assistant. Help developers embed tax docu
 ## Package Info
 
 - **NPM:** `@taxbit/react-sdk`
-- **Latest version:** `4.1.0`
+- **Latest version:** `5.0.0`
 - **Install:** `npm i @taxbit/react-sdk`
 - **Compatibility:** React 16–19 (peer dependency), TypeScript 5+ (type definitions bundled — no separate `@types` package needed)
+
+## What Changed in 5.0.0
+
+5.0.0 is a major release. Four things break existing integrations.
+
+1. **`typesOfIncome` is now required whenever `treatyClaims` is `true`.** Omitting it, or passing a value outside the supported set, **throws at initialization**. Values are validated, not normalized.
+2. **`fatca: false` combined with `typesOfIncome` containing `INTEREST` or `DIVIDENDS` throws.** Those payment types require a Chapter 4 status. Either omit `fatca`, which resolves to `true`, or drop those income types.
+3. **The `TypeOfIncome` value set changed.** `SERVICES` is gone. `INTEREST`, `DIVIDENDS`, `OTHER_INCOME`, and `ROYALTIES_MOTION_PICTURE_AND_TV` are new. Separators are tolerant, so `ROYALTIES_OTHER` and `ROYALTIES-OTHER` both work, but **case is not folded** and `royalties-other` throws.
+4. **`useTaxbitStatus` is now a public export with a changed signature.** Code deep-importing the old internal path will break. It drops `questionnaire` and `prepopulateWithSavedData` from its props, drops `serverData`, `refresh`, and `refreshSubmission` from its return, and adds `needsCuringDocumentation`.
+
+Also new, without breaking anything: the `fatca` prop for Chapter 4 collection, real-time GIIN validation against the IRS FFI list, a new `substantialUsOwners` step id, a `config` object recorded on submissions, and localized certification dates. Submissions now stamp `schema_version: "5"`.
+
+**There are no CSS or DOM changes between 4.x and 5.0.0.** The package's own changelog carries a CSS breaking-change table, but those renames happened back in 4.0.0. Every stylesheet and every `taxbit-*` class is byte-identical across 4.0.0, 4.1.0, and 5.0.0.
 
 ## What It Does
 
@@ -32,11 +45,13 @@ import {
   TaxbitCuringDocumentation,  // targeted W-8 issue remediation (v4+)
   TaxbitTaxResidencies,       // standalone tax-residency collection widget (v4+)
   useTaxbit,                  // read status/data, generate PDF URLs
+  useTaxbitStatus,            // status-only hook (public since v5)
+  ALL_QUESTIONNAIRES,         // readonly list of every QuestionnaireProp value
 } from '@taxbit/react-sdk';
 import '@taxbit/react-sdk/style/inline.css';
 ```
 
-**Re-exported types:** `Region` (`'US' | 'EU'`), `Locale`, `Progress`, `ClientTaxDocumentationStatus`, and — passed through from `@taxbit/utilities` — `ClientTaxDocumentation` and `ClientTaxResidency`. Import these for typing the `data` prop and callback payloads. For the full lookups/validators/types toolkit, use the **utilities** skill (`@taxbit/utilities`).
+**Re-exported types:** `Region` (`'US' | 'EU'`), `Locale`, `Progress`, `ClientTaxDocumentationStatus`, `ClientTaxDocumentation`, and `ClientTaxResidency`. Import these from `@taxbit/react-sdk` for typing the `data` prop and callback payloads.
 
 ## Quick Start (Demo Mode)
 
@@ -78,6 +93,7 @@ function TaxFormPage({ bearerToken }) {
 | `"W-FORM"`    | Collects W-9 (US persons) or W-8BEN / W-8BEN-E / W-8IMY (non-US persons) for 1099 reporting and FDAP withholding compliance |
 | `"DPS"`       | Digital Platform Seller — DAC7 (EU), UK, NZ, and Canada MRDP obligations                             |
 | `"SELF-CERT"` | CRS, CARF, DAC8 self-certification per OECD guidance                                                  |
+| `"RESIDENCIES"` | Tax-residency collection only, backing the `TaxbitTaxResidencies` widget. Present in the `QuestionnaireProp` type but not yet described in the web docs |
 
 ## Authentication
 
@@ -142,12 +158,14 @@ function TaxForm() {
 | Prop                       | Type                                    | Required | Default                           | Description                                                            |
 | -------------------------- | --------------------------------------- | -------- | --------------------------------- | ---------------------------------------------------------------------- |
 | `bearerToken`              | string                                  | Yes*     | —                                 | Account-owner-scoped token. *Not required when `demoMode` is true      |
-| `questionnaire`            | `'W-FORM' \| 'DPS' \| 'SELF-CERT'`      | Yes      | —                                 | Form type to render                                                    |
+| `questionnaire`            | `'W-FORM' \| 'DPS' \| 'SELF-CERT' \| 'RESIDENCIES'` | Yes | —                        | Form type to render                                                    |
 | `data`                     | `ClientTaxDocumentation`                | No       | —                                 | Pre-collected data; overrides server data if both exist (see Adaptive Mode) |
 | `adaptiveMode`             | `'full' \| 'skipLock' \| 'skipEdit'`    | No       | `'full'`                          | Behavior with pre-filled / prior data                                  |
 | `prepopulateWithSavedData` | boolean                                 | No       | `true`                            | Fetch the prior submission on mount; set `false` to skip server prefill |
 | `language`                 | string (locale)                         | No       | `'en-us'` (W-FORM), `'en-gb'` (DPS/SELF-CERT) | Pre-select form language                                    |
 | `treatyClaims`             | boolean                                 | No       | `false`                           | W-FORM only: enable treaty claim questions in W-8 flows                |
+| `typesOfIncome`            | `TypeOfIncome \| string \| (TypeOfIncome \| string)[]` | Yes if `treatyClaims` | —      | W-FORM only: income types the account can generate. Drives treaty filtering. Throws if missing or unrecognized |
+| `fatca`                    | boolean                                 | No       | `true`                            | New in 5.0.0. W-FORM only: enable FATCA (Chapter 4) collection. Throws if `false` while `typesOfIncome` includes `INTEREST` or `DIVIDENDS` |
 | `realTimeTinValidation`    | boolean                                 | No       | `false`                           | W-FORM only: validate name/TIN against IRS in real time (W-9)          |
 | `region`                   | `'US' \| 'EU'`                          | No       | `'US'`                            | Route requests to the selected Taxbit region                           |
 | `dateFormat`               | `'mdy' \| 'dmy' \| 'ymd'`               | No       | `'mdy'`                           | Date picker order                                                      |
@@ -441,7 +459,6 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 | `.taxbit-page-header`                              | Top header bar                                             |
 | `.taxbit-page-title`                               | Step/page heading                                          |
 | `.taxbit-page-sub-title`                           | Subtitle under the title                                   |
-| `.taxbit-progress-status`                          | "Step X of Y" progress text                                |
 | `.taxbit-select-language`                          | Language picker dropdown in the header                     |
 | `.taxbit-page-main` / `.taxbit-page-content`       | Main body wrapper / inner content region                   |
 | `.taxbit-page-footer` / `.taxbit-footer`           | Footer region (top border, spacing)                        |
@@ -473,16 +490,15 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 | `.taxbit-row-content` / `.taxbit-row-value` / `.taxbit-input-group` | Value-side containers (input + adornments)                 |
 | `.taxbit-row-actions`                                        | Right-side action column for the row                              |
 | `.taxbit-row-action-button`                                  | Generic small row button                                          |
-| `.taxbit-row-edit-button` / `.taxbit-row-edit-button-*`      | Edit button + its inner content                                   |
+| `.taxbit-row-edit-button` / `.taxbit-row-edit-button-content` | Edit button and its inner content                                 |
 | `.taxbit-show-button` / `.taxbit-hide-button`                | Password-style show/hide toggles                                  |
-| `.taxbit-input-status` / `.taxbit-input-status-footer`       | Input-status wrapper + its footer                                 |
+| `.taxbit-input-status`                                       | Input-status wrapper                                              |
 
 **Form controls**
 
 | Class                                                          | Element / role                                      |
 | -------------------------------------------------------------- | --------------------------------------------------- |
 | `.taxbit-input`                                                | Text input base                                     |
-| `.taxbit-textarea`                                             | Multiline (paired with `.taxbit-input`)             |
 | `.taxbit-input-file`                                           | File input                                          |
 | `.taxbit-password`                                             | Password field                                      |
 | `.taxbit-select`                                               | Dropdown base                                       |
@@ -495,15 +511,13 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 | `.taxbit-radio-button-option`                                  | Option label wrapper                                |
 | `.taxbit-radio-button-sub-option`                              | Option helper text                                  |
 | `.taxbit-placeholder`                                          | Placeholder/empty-value styling                     |
-| `.taxbit-file-selected` / `.taxbit-filename`                   | Selected-file display                               |
+| `.taxbit-file-selected` / `.taxbit-file-icon` / `.taxbit-file-value`   | Selected-file display                       |
 
 **Address composite**
 
-| Class                                                                                           | Element / role              |
-| ----------------------------------------------------------------------------------------------- | --------------------------- |
-| `.taxbit-address`                                                                               | Address block wrapper       |
-| `.taxbit-address-line-1` / `.taxbit-address-line-2` / `.taxbit-address-region` / `.taxbit-address-country` | Sub-fields        |
-| `.taxbit-city` / `.taxbit-state` / `.taxbit-postal-code`                                        | City/state/postal spacing   |
+Address subfields do **not** have a fixed class list. They are generated at runtime from the field key as `` `taxbit-${key}` ``, which is why you will see classes like `.taxbit-city` and `.taxbit-postal-code` in the DOM. Inspect the rendered markup for the exact keys in your flow rather than coding against a list.
+
+> Earlier revisions of this skill documented `.taxbit-address-line-1`, `.taxbit-address-line-2`, `.taxbit-address-region`, and `.taxbit-address-country`. **Those classes appear in no shipped bundle.** They were an error. Do not target them.
 
 **Buttons**
 
