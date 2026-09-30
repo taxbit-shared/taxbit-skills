@@ -4,7 +4,12 @@
 
 The SDK's CSS is **intentionally minimal, hand-written, and mostly unopinionated** — it is a sensible default, not a design system to conform to. **Customers are not expected to keep it.** The real asset is a **predictable, stably-named `taxbit-*` class structure** that is easy to override or replace wholesale. Design the integration around styling those classes yourself, not around the shipped look.
 
-**There are no CSS custom properties / theming variables** — the defaults are plain hardcoded values inside `taxbit-*` classes, so do not invent `--taxbit-*` variables; they do not exist. All customization is done by targeting the `taxbit-*` classes with your own CSS. Both `TaxbitQuestionnaire` and `TaxbitCuringDocumentation` render the same classes, so one set of overrides styles both.
+**Two ways to customize (6.0.0+):**
+
+1. **Theme colors with CSS custom properties.** `inline.css` and `basic.css` declare 17 `--taxbit-color-*` properties on `:root`, and every color in them reads from one; `minimal.css` declares only the four status colors. Override them on `:root`, or on any ancestor of the SDK to scope a theme. They take effect only when you import one of those stylesheets. The full list is below; these are the only `--taxbit-*` properties, so don't invent others (no spacing, font, or radius tokens exist).
+2. **Override the `taxbit-*` classes** for anything beyond color: layout, spacing, fonts, borders, or a full restyle with no base stylesheet.
+
+Both `TaxbitQuestionnaire` and `TaxbitCuringDocumentation` render the same classes and use the same properties, so one set of overrides styles both. Before 6.0.0 there were no custom properties; on 5.x, customize with class overrides only.
 
 ## Choosing a base stylesheet
 
@@ -13,9 +18,9 @@ The base import is optional — many integrators skip it (or use `minimal.css`) 
 | Stylesheet                                | What it provides                                                                                  |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | _(none)_                                  | No SDK styling. You own every rule against the `taxbit-*` classes. Cleanest slate.                |
-| `@taxbit/react-sdk/style/minimal.css`     | Bare bones — only message/badge colors, page width, and a few structural rules. Good starting point when you intend to restyle. |
+| `@taxbit/react-sdk/style/minimal.css`     | Bare bones — only message/badge colors (the four status properties), page width, row and footer spacing, section titles reset to plain text, stacked buttons on narrow screens, and muted disabled buttons. Good starting point when you intend to restyle. |
 | `@taxbit/react-sdk/style/inline.css`      | The full default look — layout, inputs, buttons, badges. Use if the default is close enough and you only tweak.               |
-| `@taxbit/react-sdk/style/basic.css`       | Nearly identical to `inline.css`; differs only in radio sub-option styling, `.taxbit-row` uses column layout, and a postal-code margin. |
+| `@taxbit/react-sdk/style/basic.css`       | Nearly identical to `inline.css`; `.taxbit-row` uses column layout, radio sub-options are styled differently, and it adds a placeholder color and a postal-code margin. |
 | `@taxbit/react-sdk/style/index.css`       | Root defaults only: Inter font stack, base text color `#12263f`, and page padding. Pairs with the others. |
 
 ```tsx
@@ -23,21 +28,48 @@ import '@taxbit/react-sdk/style/inline.css'; // optional base
 import './taxbit-overrides.css';             // your CSS, imported AFTER the base
 ```
 
-## Default values (only relevant if you keep a base and tweak piecemeal)
+## Color properties (6.0.0+)
 
-These are the hardcoded defaults — a reference for what you're overriding when you extend the shipped look rather than replace it. If you're styling from scratch, ignore them.
+Declared on `:root` by `inline.css` and `basic.css` (defaults meet WCAG 2.1 AA contrast on white). `minimal.css` declares only the four status colors.
 
-- **Primary (submit) button:** background `rgb(0, 96, 223)`, hover `rgb(2, 80, 187)`, disabled `rgb(170, 179, 187)`, text `#ffffff`
-- **Secondary button:** background `#f9f9f9`, hover `#e9e9e9`, text `#1a1a1a`
-- **Body text / titles:** `#12263f`
-- **Borders / dividers:** `#e4ebf6`; **input border:** `#bfcde2`
-- **Status colors:** valid/success `green`, invalid/error `firebrick`, warning/pending `goldenrod`, info `blue`
-- **Layout:** page `max-width: 600px`, inputs/selects `height: 33px`, border-radius 4px (inputs) / 8px (buttons)
-- **Font:** `Inter, system-ui, Avenir, Helvetica, Arial, sans-serif`
+| Property | Default | Used for |
+| --- | --- | --- |
+| `--taxbit-color-text` | `#12263f` | Body text and titles |
+| `--taxbit-color-text-muted` | `#5c6773` | Sub-labels, helper text |
+| `--taxbit-color-placeholder` | `#767676` | Placeholder text |
+| `--taxbit-color-on-primary` | `#ffffff` | Text on primary buttons |
+| `--taxbit-color-error` | `#b22222` | Errors, invalid badges |
+| `--taxbit-color-warning` | `#a06000` | Warnings, pending badges |
+| `--taxbit-color-success` | `#008000` | Success, valid badges |
+| `--taxbit-color-info` | `#0000ff` | Info messages |
+| `--taxbit-color-border` | `#7d899e` | Input and select borders |
+| `--taxbit-color-divider` | `#e4ebf6` | Dividers, footer rule |
+| `--taxbit-color-primary` | `#0060df` | Primary (Next, Submit) button |
+| `--taxbit-color-primary-hover` | `#0250bb` | Primary button hover |
+| `--taxbit-color-primary-disabled` | `#aab3bb` | Disabled primary button |
+| `--taxbit-color-secondary-bg` | `#f9f9f9` | Secondary (Back) button |
+| `--taxbit-color-secondary-bg-hover` | `#e9e9e9` | Secondary button hover |
+| `--taxbit-color-secondary-text` | `#1a1a1a` | Secondary button text |
+| `--taxbit-color-secondary-text-hover` | `#000000` | Secondary button hover text |
+
+```css
+/* Brand colors, with inline.css or basic.css imported */
+:root {
+  --taxbit-color-primary: #6b21a8;
+  --taxbit-color-primary-hover: #581c87;
+  --taxbit-color-text: #1f2937;
+}
+```
+
+## Other defaults (only relevant if you keep a base and tweak piecemeal)
+
+- **Layout:** page `max-width: 600px`; inputs and selects `height: 33px`; border radius 4px (inputs), 8px (buttons); below 600px the step buttons stack full width.
+- **Font:** `index.css` sets `Inter, system-ui, Avenir, Helvetica, Arial, sans-serif` and the base text color `#12263f`; the other stylesheets inherit the host's font.
+- **Section titles** render as `<h4>` (6.0.0+); `minimal.css` resets their margin, size, and weight so they match the surrounding text, and the other stylesheets style them. Embed the SDK where an `h4` fits your page's heading outline.
 
 ## Class reference
 
-Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermost → innermost). Override any of them. Not all are styled by the bundled stylesheets — many are structural wrappers exposed purely as override hooks, so a class appearing here that has no rule in `basic.css`/`inline.css` is still a valid, stable target.
+Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermost → innermost). Override any of them. Not all are styled by the bundled stylesheets — many are structural wrappers exposed purely as override hooks, so a class appearing here that has no rule in `basic.css`/`inline.css` is still a valid, stable target. The reverse also happens: the bundled CSS has rules for `.taxbit-textarea`, `.taxbit-progress-status`, and `.taxbit-input-status-footer`, but the SDK never renders those classes (checked in 6.0.0), so don't target them.
 
 **Root & page chrome**
 
@@ -50,9 +82,11 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 | `.taxbit-select-language`                          | Language picker dropdown in the header                     |
 | `.taxbit-page-main` / `.taxbit-page-content`       | Main body wrapper / inner content region                   |
 | `.taxbit-page-footer` / `.taxbit-footer`           | Footer region (top border, spacing)                        |
-| `.taxbit-page-actions` / `.taxbit-step-actions`    | Footer action-bar wrapper (space-between)                  |
-| `.taxbit-primary-actions`                          | Right-aligned group (Next/Submit) — default `rgb(0,96,223)` |
-| `.taxbit-secondary-actions`                        | Left-aligned group (Back/Cancel)                           |
+| `.taxbit-page-actions` / `.taxbit-step-actions`    | Footer action-bar wrapper                                  |
+| `.taxbit-primary-actions`                          | Next / Submit group (`--taxbit-color-primary`)             |
+| `.taxbit-secondary-actions`                        | Back / Cancel group                                        |
+
+> **Button order (6.0.0+):** the primary group comes **first in the DOM**, before Back, so keyboard and screen-reader users reach it first. The bundled stylesheets use `flex-direction: row-reverse` on the action bar to keep Back on the left on wide screens, and stack the buttons (primary on top) below 600px. If your own stylesheet lays the action bar out as a row, add `flex-direction: row-reverse` or Next will appear on the left.
 
 **Sections (grouping within a step)**
 
@@ -61,7 +95,8 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 | `.taxbit-form-<form-name>`            | Dynamic wrapper keyed by form type (e.g. `.taxbit-form-w-8ben-e`) — theme one form. See Dynamic classes below. |
 | `.taxbit-section`                     | A titled group of fields                                          |
 | `.taxbit-section-header`              | Section header                                                    |
-| `.taxbit-section-header-title`        | Section title                                                     |
+| `.taxbit-section-header-title`        | Section title (an `<h4>` in 6.0.0+)                               |
+| `.taxbit-section-header-title-group`  | Wraps the title and subtitle (6.0.0+)                             |
 | `.taxbit-section-header-sub-title`    | Section subtitle                                                  |
 | `.taxbit-section-header-action`       | Right-aligned action slot in a section header                     |
 | `.taxbit-section-content`             | Section body                                                      |
@@ -73,7 +108,8 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 | ------------------------------------------------------------ | ----------------------------------------------------------------- |
 | `.taxbit-question-<field-name>`                              | Dynamic per-field wrapper (e.g. `.taxbit-question-tin`) — target one field. See Dynamic classes below. |
 | `.taxbit-row`                                                | One field row (label + value); gets `.taxbit-error` when invalid  |
-| `.taxbit-label`                                              | Field label                                                       |
+| `.taxbit-label`                                              | Field label. For grouped controls (radio sets, phone and date rows, tax-residency and controlling-person sections) it's a `<div>` that labels the group, not a `<label>` (6.0.0+) |
+| `.taxbit-required-marker`                                    | Required indicator (6.0.0+): a `<span aria-hidden="true">` containing the asterisk, beside the label (previously the asterisk was part of the label text). Unstyled by the bundled CSS; style the span to change it |
 | `.taxbit-sub-label`                                          | Helper/description text under the label (styles nested `p`/`ol`/`ul`) |
 | `.taxbit-row-content` / `.taxbit-row-value` / `.taxbit-input-group` | Value-side containers (input + adornments)                 |
 | `.taxbit-row-actions`                                        | Right-side action column for the row                              |
@@ -103,27 +139,24 @@ Every class uses the `taxbit-` prefix and follows the DOM nesting below (outermo
 
 **Address composite**
 
-Address subfields do **not** have a fixed class list. They are generated at runtime from the field key as `` `taxbit-${key}` ``, which is why you will see classes like `.taxbit-city` and `.taxbit-postal-code` in the DOM. Inspect the rendered markup for the exact keys in your flow rather than coding against a list.
-
-> `.taxbit-address-line-1`, `.taxbit-address-line-2`, `.taxbit-address-region`, and `.taxbit-address-country` are **declared in the SDK source but unused**, so the bundler drops them and they appear in no shipped bundle through 5.0.0. Do not target them today. They would become real if that component is ever wired in.
+The bundled stylesheets style address subfields `.taxbit-city`, `.taxbit-state`, and `.taxbit-postal-code`. Inspect the rendered markup for the exact subfield classes in your flow rather than coding against a fixed list. `.taxbit-address-line-1`, `.taxbit-address-line-2`, `.taxbit-address-region`, and `.taxbit-address-country` **don't exist** in the 6.0.0 source or any shipped bundle; don't target them.
 
 **Buttons**
 
 | Class                        | Element / role                                                          |
 | ---------------------------- | ----------------------------------------------------------------------- |
 | `.taxbit-button`             | Base button (used inside primary/secondary action groups; rendered as `button.taxbit-button` — see specificity note) |
-| `.taxbit-button-disabled`    | Disabled modifier                                                       |
+| `.taxbit-button-disabled`    | Disabled modifier. In 6.0.0+ the primary action (Next, Submit) is never natively `disabled`: while it works or after submit it carries `aria-disabled="true"` plus this class and ignores clicks, so focus stays on it. Other unavailable buttons keep the native `disabled` attribute. Mute disabled buttons with `.taxbit-button-disabled` or `[aria-disabled='true']`, not only `:disabled` |
 
 **Status, messages & badges**
 
 | Class                                | Element / role                                                        |
 | ------------------------------------ | --------------------------------------------------------------------- |
 | `.taxbit-badge`                      | Validation badge; state modifiers `.valid` / `.invalid` / `.pending`  |
-| `.taxbit-error-message`              | Error text (`firebrick`, `0.8em`)                                     |
-| `.taxbit-success-message`            | Success text (`green`, `0.8em`)                                       |
-| `.taxbit-info-message`               | Info text (`blue`, `0.8em`)                                           |
-| `.taxbit-warning-message`            | Warning text (`goldenrod`, `0.8em`)                                   |
-| `.taxbit-error-message-<field-name>` | Dynamic per-field error message (e.g. `.taxbit-error-message-tin`). See Dynamic classes below. |
+| `.taxbit-error-message`              | Error text (`--taxbit-color-error`, `0.8em`); a live region announced to screen readers |
+| `.taxbit-success-message`            | Success text (`--taxbit-color-success`, `0.8em`)                      |
+| `.taxbit-info-message`               | Info text (`--taxbit-color-info`, `0.8em`)                            |
+| `.taxbit-warning-message`            | Warning text (`--taxbit-color-warning`, `0.8em`)                      |
 | `.taxbit-spinner-icon`               | Loading spinner                                                       |
 
 **State modifiers (applied alongside the classes above)**
@@ -135,30 +168,33 @@ Address subfields do **not** have a fixed class list. They are generated at runt
 
 ## Dynamic classes
 
-Three class families are generated at runtime by **kebab-casing the form or field key** — do not hard-code a fixed list, derive the name from the key:
+Two class families are generated at runtime by **kebab-casing the form or field key**. Don't hard-code a fixed list; derive the name from the key:
 
-- `.taxbit-form-<form-name>` — one per form type, e.g. W-8BEN-E → `.taxbit-form-w-8ben-e`. Use to theme a single form type.
-- `.taxbit-question-<field-name>` — one per field, e.g. the TIN field → `.taxbit-question-tin`. Use to target a single field's row.
-- `.taxbit-error-message-<field-name>` — the error text for a specific field, e.g. `.taxbit-error-message-tin`.
+- `.taxbit-form-<form-name>`: one per form type, e.g. W-8BEN-E → `.taxbit-form-w-8ben-e`. Use it to theme a single form type.
+- `.taxbit-question-<field-name>`: one per field row, e.g. the TIN field → `.taxbit-question-tin`. Use it to target a single field.
 
-**Caveat — not everything `taxbit-error-*` is a class.** Some `taxbit-error-*` tokens in the DOM (e.g. `taxbit-error-dob`, `taxbit-error-tin-not-required`) are element **`id`s** used for `aria-describedby`, not CSS classes. Do not write CSS overrides against them; target the `.taxbit-error-message-<field-name>` **class** for per-field error styling instead.
+**Per-field error text:** there is no per-field error class. Scope the shared class by field row, e.g. `.taxbit-question-tin .taxbit-error-message`.
+
+**`taxbit-error-message-<field>` and `taxbit-group-label-<key>` are element `id`s, not classes.** They exist for `aria-describedby` and `aria-labelledby` (the same goes for other `taxbit-error-*` ids such as `taxbit-error-dob`). Don't write CSS against them as classes. Earlier versions of this skill documented `.taxbit-error-message-<field-name>` as a class; it never was one.
 
 ## Specificity note (when keeping a base stylesheet)
 
-If you import no base, ignore this — your rules are the only rules. When you keep a base and override it: buttons are styled with element-qualified selectors (`button.taxbit-button`, `button.taxbit-button-disabled`) and primary/secondary buttons via **nested** child selectors (e.g. `.taxbit-step-actions .taxbit-primary-actions > button`). A bare `.taxbit-button { … }` override may lose to these. To reliably win, match or exceed their specificity (qualify with `button`, replicate the nesting, or scope under a container) rather than reaching for `!important`.
+If you import no base, ignore this — your rules are the only rules. When you keep a base, first check whether a color property covers what you want; it avoids specificity entirely. For class overrides: buttons are styled with element-qualified selectors (`button.taxbit-button`, `button.taxbit-button-disabled`, `button.taxbit-button[aria-disabled='true']`) and primary/secondary buttons via **nested** child selectors (e.g. `.taxbit-step-actions .taxbit-primary-actions > button`). A bare `.taxbit-button { … }` override may lose to these. To reliably win, match or exceed their specificity (qualify with `button`, replicate the nesting, or scope under a container) rather than reaching for `!important`.
 
 ## Override examples
 
 ```css
 /* taxbit-overrides.css — imported after the base stylesheet */
 
-/* Brand the primary submit/next button */
+/* Brand the primary button: on 6.0.0+ prefer the color properties */
+:root {
+  --taxbit-color-primary: #6b21a8;
+  --taxbit-color-primary-hover: #581c87;
+}
+
+/* ...or the class override (all versions) */
 .taxbit-step-actions .taxbit-primary-actions > button {
   background-color: #6b21a8;
-}
-.taxbit-step-actions .taxbit-primary-actions > button:hover {
-  background-color: #581c87;
-  border-color: #581c87;
 }
 
 /* Restyle inputs and selects */
@@ -167,6 +203,9 @@ If you import no base, ignore this — your rules are the only rules. When you k
   border: 1px solid #d1d5db;
   border-radius: 6px;
 }
+
+/* Color the required asterisk (6.0.0+) */
+.taxbit-required-marker { color: var(--taxbit-color-error); }
 
 /* Widen the form and change the title */
 .taxbit-page { max-width: 820px; }

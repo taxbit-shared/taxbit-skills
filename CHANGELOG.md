@@ -4,8 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **React SDK:** `reference/upgrading-to-6.md`, covering the `@taxbit/react-sdk` 6.0.0 breaking changes (stylesheets, DOM and test selectors, per-language ES build files, host-page accessibility duties) and the non-breaking additions (screen-reader support, focus on step change, server rendering, on-demand languages).
+
 ### Changed
-- **React SDK:** `SKILL.md` is now core usage plus pointers (328 lines / 20 KB, down from 692 / 45 KB), within Anthropic's under-500-lines guidance and the 5,000 tokens a skill keeps after compaction. Styling and the class reference, curing, adaptive mode, `onProgress`, `TaxbitTaxResidencies`, supported languages, the 5.0.0 upgrade notes, and the full security checklist moved verbatim to `skills/react-sdk/reference/`. Each pointer keeps the key facts (for example, no CSS variables; 5.0.0's breaking changes).
+- **React SDK:** documented version bumped `5.0.0` → `6.0.0`. The styling reference now covers the 17 `--taxbit-color-*` custom properties and their AA-contrast defaults (theme with them on 6.0.0+; class overrides still work), the primary-before-Back DOM order and `row-reverse`, `<h4>` section titles, group labels as `<div class="taxbit-label">`, the new `taxbit-required-marker` and `taxbit-section-header-title-group` classes, and `aria-disabled` on the primary action. Verified against the 6.0.0 bundles and SDK source, not only the SDK changelog.
+- **React SDK:** `SKILL.md` is now core usage plus pointers (328 lines / 20 KB, down from 692 / 45 KB), within Anthropic's under-500-lines guidance and the 5,000 tokens a skill keeps after compaction. Styling and the class reference, curing, adaptive mode, `onProgress`, `TaxbitTaxResidencies`, supported languages, the 5.0.0 upgrade notes, and the full security checklist moved verbatim to `skills/react-sdk/reference/`. Each pointer keeps the key facts (for example, how to theme, and the breaking changes).
+
+### Fixed
+- **React SDK:** removed "there are no CSS custom properties", which is false for 6.0.0.
+- **React SDK:** `taxbit-error-message-<field>` is an element `id` used for `aria-describedby`, not a class (true in 5.0.0 too). Per-field error styling is `.taxbit-question-<field> .taxbit-error-message`.
+- **React SDK:** the `taxbit-address-*` subfield classes are documented as nonexistent (no longer "declared but unused").
 
 ## [0.5.0] - 2026-09-30
 

@@ -11,4 +11,4 @@
 
 Also new, without breaking anything: the `fatca` prop for Chapter 4 collection, real-time GIIN validation against the IRS FFI list, a new `substantialUsOwners` step id, a `config` object recorded on submissions, and localized certification dates. Submissions now stamp `schema_version: "5"`.
 
-**There are no CSS or DOM changes between 4.x and 5.0.0.** The package's own changelog carries a CSS breaking-change table, but those renames happened back in 4.0.0. Every stylesheet and every `taxbit-*` class is byte-identical across 4.0.0, 4.1.0, and 5.0.0.
+**There are no CSS or DOM changes between 4.x and 5.0.0** (6.0.0 does change them; see [upgrading-to-6.md](upgrading-to-6.md)). The package's own changelog carries a CSS breaking-change table, but those renames happened back in 4.0.0. Every stylesheet and every `taxbit-*` class is byte-identical across 4.0.0, 4.1.0, and 5.0.0.

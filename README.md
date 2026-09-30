@@ -7,7 +7,7 @@ An agent skills package for integrating with the [Taxbit](https://taxbit.com) pl
 | Skill | Description |
 |-------|-------------|
 | **API** | REST API integration — authentication, account owners, accounts, assets, transactions, tax documentation, gains/inventory, form items, documents, reports, filers, withholding, TIN validation, webhooks, and error handling. Every endpoint is covered by a reference generated from the OpenAPI spec |
-| **React SDK** | React SDK integration for tax form collection and W-8 issue curing (`@taxbit/react-sdk` v5) |
+| **React SDK** | React SDK integration for tax form collection and W-8 issue curing (`@taxbit/react-sdk` v6) |
 
 Skills are auto-invoked when the agent detects a relevant task.
 
