@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-30
+
+### Added
+- **API:** a complete endpoint reference in `skills/api/reference/`, generated from Taxbit's OpenAPI spec: all 65 operations, one file per endpoint, with every parameter and body field (type, required, allowed values), examples, and responses. Agents open only the files a task needs.
+- **API:** the six **Assets** endpoints (configure, list, look up, get, update, delete), which the skill had never covered.
+- **API:** format notes for the treaty claim fields (`treaty_claim_article_paragraph`, `treaty_claim_rate_of_withholding`, `treaty_claim_has_additional_conditions`), merged into those fields wherever they appear. The docs' sample article reference ("Article 12, Paragraph 1") is rejected by the API.
+- `scripts/generate-api-reference.mjs` with `--check` and tests (`node --test scripts/`).
+
+### Changed
+- **API:** `SKILL.md` is now guidance plus an index of the reference (15 KB, down from 48 KB), so each use loads far less context. Per-area behavior notes moved to `src/api-notes/` and appear at the top of each area's reference file.
+- **CLAUDE.md:** the API regeneration recipe now runs the generator for the endpoint reference and reads only the guides for the guidance, instead of fetching 60+ endpoint pages.
+
+### Fixed
+- **API:** the skill's frontmatter began with four spaces, so agents didn't recognize `SKILL.md` as a skill and `taxbit:api` wasn't offered.
+- **API:** self-certification `signature_capacity` values are `OFFICER`, `EXECUTOR`, `OTHER_CAPACITY` (the skill listed six values the API doesn't accept).
+
 ## [0.4.0] - 2026-09-15
 
 ### Added

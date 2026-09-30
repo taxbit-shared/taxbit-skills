@@ -1,0 +1,7 @@
+Applies only to accounts whose disposition method is `AUSTRIA`. Calling it for any other account returns **409**.
+
+The **27.5% KESt rate is already applied** to the returned amounts. There is no discrete rate field.
+
+**Polling pattern:** after submitting a transaction, poll with `transaction_id` until `transaction` is non-null, then release funds. Do not use a `calculation_status` field — the Austria guide shows one in an example, but it does not exist in the actual response schema. `transaction !== null` is the completion signal.
+
+**Gain types under AUSTRIA.** `gain_type` carries 7 values, not 2: `long-term`, `short-term`, `at-new-stock`, `at-user-basis`, `at-missing-basis`, `at-old-stock-long-term`, `at-old-stock-short-term`. The last five are Austrian inventory pools, and one disposal can emit a row per pool.

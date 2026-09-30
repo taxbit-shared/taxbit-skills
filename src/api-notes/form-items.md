@@ -1,0 +1,3 @@
+- `GET /users/{user-id}/form-items` requires `tax_year` and `document_type` (`1099_B`, `1099_INT`, `1099_DIV`, `1099_DA`, `1099_MISC`, `1099_NEC`, `1099_K`, `1099_R`, `5498`); `1099_B` supports `continuation_key`.
+- `POST /form-items/batch` is partial-success and returns `{ successes[], failures[] }` (no `data` envelope). `successes[]` items hold `form_item`. `failures[]` items hold `form_item` plus a string `error` giving the reason, e.g. `"Invalid 1099b_item object."`. There is no positional `index` — match failures back to your input by `form_item.id`.
+- Aggregates return `document_type`, `record_count`, `proceeds`, `cost_basis`. Filter by date range **or** disposed-date range, never both.

@@ -6,7 +6,7 @@ An agent skills package for integrating with the [Taxbit](https://taxbit.com) pl
 
 | Skill | Description |
 |-------|-------------|
-| **API** | REST API integration — authentication, account owners, transactions, tax documentation, gains/inventory, reports, filers, TIN validation, webhooks, and error handling |
+| **API** | REST API integration — authentication, account owners, accounts, assets, transactions, tax documentation, gains/inventory, form items, documents, reports, filers, withholding, TIN validation, webhooks, and error handling. Every endpoint is covered by a reference generated from the OpenAPI spec |
 | **React SDK** | React SDK integration for tax form collection and W-8 issue curing (`@taxbit/react-sdk` v5) |
 
 Skills are auto-invoked when the agent detects a relevant task.
@@ -42,10 +42,13 @@ You can use both — they don't conflict. Use the Skills CLI to add project-leve
 ## Project Structure
 
 ```
-plugin.json              # Claude Code plugin manifest
+plugin.json                    # Claude Code plugin manifest
 skills/
-  api/SKILL.md           # Taxbit REST API skill
-  react-sdk/SKILL.md     # Taxbit React SDK skill
+  api/SKILL.md                 # Taxbit REST API skill
+  api/reference/               # Endpoint reference, generated from the OpenAPI spec
+  react-sdk/SKILL.md           # Taxbit React SDK skill
+scripts/                       # Reference generator (maintainers)
+src/                           # Notes merged into the reference (maintainers)
 ```
 
 ## Resources

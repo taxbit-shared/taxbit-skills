@@ -1,6 +1,6 @@
-    ---
+---
 name: api
-description: Helps developers integrate with the Taxbit REST API. Use when writing server-side code that interacts with Taxbit endpoints for account owners, accounts, transactions, tax documentation, gains, inventory, form items, reports, or filers. Also use when setting up authentication, handling webhooks, or validating TINs. For the React SDK (front-end tax form collection), use the react-sdk skill instead.
+description: Helps developers integrate with the Taxbit REST API. Use when writing server-side code that interacts with Taxbit endpoints for account owners, accounts, assets, transactions, tax documentation, gains, inventory, form items, documents, reports, filers, or withholding. Also use when setting up authentication, handling webhooks, or validating TINs. For the React SDK (front-end tax form collection), use the react-sdk skill instead.
 allowed-tools:
   - Read
   - Grep
@@ -18,6 +18,7 @@ You are a Taxbit API integration assistant. Help developers write code that inte
 Taxbit provides REST APIs for cryptocurrency and digital asset tax compliance, including:
 - **Account Owners** — individuals or entities subject to tax reporting
 - **Accounts** — financial accounts associated with account owners
+- **Assets** — the assets (currencies, tokens, securities) your transactions reference
 - **Transactions** — trades, transfers, income, staking, and other taxable events
 - **Tax Documentation** — W-9, W-8BEN, W-8BEN-E, W-8IMY, and self-certification forms
 - **Gains & Inventory** — cost basis tracking, disposition methods, gain/loss calculations
@@ -28,6 +29,7 @@ Taxbit provides REST APIs for cryptocurrency and digital asset tax compliance, i
 - **Withholding** — Austrian KESt capital gains withholding balances
 - **Real-Time TIN Validation** — validate TINs against IRS records
 - **Webhooks** — event notifications for validation and status changes
+
 
 ## Base URLs
 
@@ -92,348 +94,37 @@ Content-Type: application/json
 - **Never expose `client_secret` in client-side code.** Account-owner tokens must be obtained server-side and passed to the frontend.
 - Refresh proactively before the 24-hour expiry — don't wait for a 401.
 
-## Account Owners
-
-| Method | Path                                            | Description                  |
-| ------ | ----------------------------------------------- | ---------------------------- |
-| POST   | `/account-owners`                               | Create an account owner      |
-| PATCH  | `/account-owners/{id}`                          | Update an account owner      |
-| GET    | `/account-owners/{id}`                          | Retrieve an account owner    |
-| GET    | `/account-owners/{id}/us-tin-validation-status` | Get US TIN validation status |
-
-**Create/Update fields:**
-
-| Field                              | Type    | Required | Description                                                          |
-| ---------------------------------- | ------- | -------- | -------------------------------------------------------------------- |
-| `id`                               | string  | Yes      | Your system's unique identifier                                      |
-| `account_owner_type`               | enum    | Yes      | `INDIVIDUAL` or `ENTITY`                                             |
-| `name`                             | string  | No       | Full name                                                            |
-| `email`                            | string  | No       | Email address                                                        |
-| `phone`                            | string  | No       | Phone number                                                         |
-| `birth_date`                       | date    | No       | ISO-8601 date                                                        |
-| `birth_city` / `birth_country`     | string  | No       | Place of birth                                                       |
-| `us_tin`                           | string  | No       | US tax identification number                                         |
-| `us_tin_type`                      | enum    | No       | `US_SSN`, `US_EIN`, `US_ATIN`, `US_ITIN`, `SSN`, `EIN`, `ATIN`, `ITIN`, `OTHER` |
-| `us_tax_classification`            | enum    | No       | Chapter 3 withholding classification (large enum — see docs)         |
-| `fatca_classification`             | enum    | No       | Chapter 4 (FATCA) classification (large enum — see docs)             |
-| `tax_residencies`                  | array   | No       | `country`, `tin`, `tin_type`, `tin_not_required`, `tin_not_required_reason` (`NOT_ISSUED`/`NOT_REQUIRED`/`OTHER`) |
-| `controlling_persons`              | array   | No       | Name, role, ownership %, birth details, address, tax residencies     |
-| `address` / `mailing_address`      | object  | No       | `first_line`, `second_line`, `city`, `state_or_province`, `country`, `postal_code` |
-| `giin`                             | string  | No       | Global Intermediary Identification Number                            |
-| `vat_id` / `vat_country_code`      | string  | No       | VAT registration                                                     |
-| `business_registration_number` / `business_registration_country_code` | string | No | Business registration                                 |
-| `is_tax_exempt`                    | boolean | No       | Tax-exempt flag                                                      |
-| `valid_self_certification_on_file` | boolean | No       | Nullable                                                            |
-| `prefers_physical_mail`            | boolean | No       | Physical mail preference                                             |
-
-- Set `tax_residencies` or `controlling_persons` to `null` on PATCH to clear all existing entries.
-- The flat `tin` / `tin_type` / `tax_country_code` fields are **deprecated** — use `us_tin`/`us_tin_type` and `tax_residencies`.
-- An `account` object can be nested inside account owner creation to create both simultaneously.
-- Response wraps the object under `data` with server fields: `taxbit_id` (UUID), `tenant_id`, `date_created`, and masked TIN values.
-
-**TIN validation status (`GET .../us-tin-validation-status`)** — `status` values: `PENDING`, `FOREIGN`, `INVALID_DATA`, `VALID_SSN_MATCH`, `VALID_EIN_MATCH`, `VALID_SSN_EIN_MATCH`, `TIN_NOT_ISSUED`, `MISMATCH`, `UNPROCESSED`. Plus `validation_date`.
-
-## Accounts
-
-| Method | Path             | Description         |
-| ------ | ---------------- | ------------------- |
-| POST   | `/accounts`      | Create an account   |
-| PATCH  | `/accounts/{id}` | Update an account   |
-| GET    | `/accounts/{id}` | Retrieve an account |
-
-**Create/Update fields:**
-
-| Field                             | Type   | Required | Description                                                                 |
-| --------------------------------- | ------ | -------- | --------------------------------------------------------------------------- |
-| `id`                              | string | Yes      | Your system's unique identifier                                             |
-| `account_owner_id`                | string | Yes      | Reference to an existing account owner                                      |
-| `filer_id`                        | UUID   | No       | Filer identifier                                                            |
-| `account_type`                    | enum   | No       | 13 values: `US_IRA_TRADITIONAL`, `US_IRA_ROTH`, `US_IRA_SIMPLE`, `US_IRA_SEP`, `US_EMPLOYER_PLAN`, `US_ANNUITY_INSURANCE`, `US_TRUMP_ACCOUNT`, `DEPOSITORY`, `DEPOSITORY_SEMP_ONLY`, `CUSTODIAL`, `CASH_VALUE_INSURANCE_CONTRACT`, `ANNUITY_CONTRACT`, `INVESTMENT_ENTITY_ACCOUNT` |
-| `establishment_date`              | date   | No       | ISO-8601 account creation date                                              |
-| `closure_date`                    | date   | No       | ISO-8601 account closure date                                               |
-| `disposition_method`              | enum   | No       | `HIFO`, `FIFO`, `LIFO`, `LOFO`                                              |
-| `year_end_fair_market_value`      | array  | No       | Objects with `year_end` (4-digit year), `fair_market_value` (string), `currency` (ISO-4217, defaults `USD`) |
-| `secondary_account_owner_ids`     | array  | No       | Additional owner identifiers                                                |
-| `closest_intermediary_account_id` | string | No       | Upstream intermediary reference                                             |
-
-## Transactions
-
-| Method | Path                          | Description                           |
-| ------ | ----------------------------- | ------------------------------------- |
-| POST   | `/transactions/external-id`   | Send (create or update) a transaction |
-| GET    | `/transactions/external-id/{id}` | Retrieve a transaction by your ID  |
-| DELETE | `/transactions/external-id/{id}` | Delete a transaction               |
-| GET    | `/accounts/{id}/transactions` | List transactions for an account      |
-
-Transactions use an **upsert** pattern. `POST /transactions/external-id` is a static path — the external transaction id goes in the request body as `id`, **not** in the URL. The GET and DELETE singles **do** take it in the path.
-
-**The write and read `type` vocabularies differ.** Submissions use the lowercase list below. Responses return a different, UPPERCASE set: `TRADE`, `BUY`, `SELL`, `TRANSFER`, `TRANSFER-IN`, `TRANSFER-OUT`, `INTERNAL-TRANSFER`, `ACQUISITION`, `FOREX`, `INCOME`, `EXPENSE`, `GIFT-RECEIVED`, `GIFT-SENT`, `INVALID`, `REWARD`, `ADJUSTMENT`, `STAKE`, `UNSTAKE`, `COST-BASIS-TRANSFER`. Do not round-trip a response `type` back into a submission. Subtypes are the same lowercase list in both directions.
-
-**Key request fields:**
-
-| Field                | Type          | Required | Description                                                        |
-| -------------------- | ------------- | -------- | ------------------------------------------------------------------ |
-| `type`               | enum          | Yes      | `adjustment`, `cost-basis-transfer`, `deposit`, `expense`, `income`, `stake`, `trade`, `unstake`, `withdraw`, `contribution`, `distribution` |
-| `id`                 | string        | Yes      | Your unique transaction identifier                                 |
-| `account_id`         | string        | Yes      | Your unique account identifier                                     |
-| `datetime`           | date-time     | Yes      | ISO-8601                                                          |
-| `parent_id`          | string        | Cond.    | Required when `type` = `adjustment`                                |
-| `subtype`            | enum          | No       | e.g. `airdrop`, `fee`, `gift`, `inheritance`, `internal-personal`, `reward`, `staking-reward`, `royalties`, `referral-bonus`, `payment-goods`, `payment-services`, `rollover` (see full list in docs) |
-| `disposition_method` | enum          | No       | `HIFO`, `FIFO`, `LIFO`, `LOFO`, `SPECID` (SPECID requires `inventory_lots`) |
-| `received` / `sent`  | array         | No       | Amounts received/sent — each: `asset_amount` (`{asset:{code}, amount}`), optional `rates`, `withholdings` (received), `inventory_lots` (sent) |
-| `fees`               | array         | No       | Fees paid; same item shape as `sent`                               |
-| `metadata.tags`      | object        | No       | Key-value pairs                                                    |
-| `retirement_info`    | object        | No       | `distribution_code`, `contribution_year`                           |
-
-`withholdings[]` items: `regime_type` (`us-federal`, `us-state`, `eu-dac7`), `state` (2-char, required if `us-state`), `asset_amount`, `rates`. Response: `{ "status": "success", "message": "Transaction post successful." }`.
-
-**List transactions** query params: `continuation_key`, `page_size`, `start_date`, `end_date`, `sort_by` (`-date` default, `+date`).
-
-### Income Aggregation
-
-| Method | Path                    | Description                                   |
-| ------ | ----------------------- | --------------------------------------------- |
-| GET    | `/accounts/{id}/income` | Aggregate income data for a given time period |
-
-Query params: `start_date` (inclusive), `end_date` (exclusive), `roll_up` (`year`/`y`/`month`/`m`). Returns `data.totals` and `data.rollups[]` with `transaction_count`, `income`, `fees` (USD decimal strings).
-
-## Tax Documentation
-
-Every submission is **immutable** — each POST creates a new record. Two path scopes exist for the same operations:
-- **Path-scoped** (tenant token): `/account-owners/{id}/tax-documentation-data/...`
-- **Token-scoped** (account-owner token): same paths **without** `/account-owners/{id}` — the account owner is derived from the JWT. These are the variants the React SDK / browser flows use.
-
-| Method | Path                                                                 | Description                      |
-| ------ | -------------------------------------------------------------------- | -------------------------------- |
-| POST   | `/account-owners/{id}/tax-documentation-data/w-9`                    | Submit W-9                       |
-| POST   | `/account-owners/{id}/tax-documentation-data/w-8ben`                 | Submit W-8BEN                    |
-| POST   | `/account-owners/{id}/tax-documentation-data/w-8ben-e`               | Submit W-8BEN-E                  |
-| POST   | `/account-owners/{id}/tax-documentation-data/w-8imy`                 | Submit W-8IMY                    |
-| POST   | `/account-owners/{id}/tax-documentation-data/self-certification`     | Submit self-certification        |
-| GET    | `/account-owners/{id}/tax-documentation-data`                        | Retrieve tax documentation data  |
-| GET    | `/account-owners/{id}/tax-documentation-status`                      | Get documentation status         |
-| POST   | `/account-owners/{id}/tax-documentation-data/document`               | Generate a PDF document          |
-| GET    | `/account-owners/{id}/tax-documentation-data/document/{document-id}` | Retrieve a generated document    |
-| GET    | `/tax-documentation-data`, `/tax-documentation-status`, `POST /tax-documentation-data/document`, `GET /tax-documentation-data/document/{document-id}` | Token-scoped variants (no `id`) |
-| GET    | `/tax-treaty-rates`                                                  | Get tax treaty withholding rates |
-
-All form POSTs return **201** and mirror the submitted body.
-
-**W-8IMY has a submission endpoint.** Its reference page lives at the non-standard slug `reference/taxdocumentationcontroller_submitw8imy.md`, which is why earlier revisions of this skill wrongly claimed no such endpoint existed. The body is `W8ImySubmissionDto`: 76 properties, but only `irs_version` is required. Notable fields are a 9-value `tax_classification`, `ein_type` (`EIN`, `QI_EIN`, `WP_EIN`, `WT_EIN`), its own **26-value** `fatca_classification` (a different set from W-8BEN-E's 32), `giin` with `giin_applied_for` and `sponsoring_entity_or_trustee_name`, `nonreporting_iga_country_model` and `nonreporting_iga_trustee_type`, `securities_market`, `affiliate_entity_name`, and the full IRS checkbox range `box_14` through `box_42` (booleans, plus string dates `box_35_date_of_formation` and `box_36_date_of_filing`).
-
-**W-8BEN-E caveat:** its FATCA block and all `box_*` fields exist **only** on the `irs_version` variant, not on the substitute-form variant.
-
-### W-9 Submission
-
-| Field                                | Type    | Description                                                                                                  |
-| ------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------ |
-| `name` / `dba_name`                  | string  | Legal name / doing-business-as name                                                                          |
-| `tax_classification`                 | enum    | `INDIVIDUAL`, `C_CORPORATION`, `S_CORPORATION`, `PARTNERSHIP`, `TRUST_ESTATE`, `LLC_C`, `LLC_P`, `LLC_S`, `SOLE_PROPRIETOR`, `OTHER` |
-| `other_tax_classification`           | string  | Used with `OTHER`                                                                                            |
-| `tin` / `tin_type`                   | string / enum | `tin_type`: `SSN`, `EIN`, `ITIN`, `ATIN`                                                              |
-| `address`                            | object  | Standard address                                                                                             |
-| `exempt_payee_code`                  | enum    | `1`–`13`                                                                                                     |
-| `exempt_fatca_code`                  | enum    | `A`–`M`                                                                                                      |
-| `is_not_subject_backup_withholding`  | boolean | Defaults `true`                                                                                              |
-| `has_signed_and_certified`           | boolean | Certification                                                                                                |
-| `signature_timestamp`                | date-time | ISO-8601                                                                                                   |
-| `completed_for`                      | enum    | `ACCOUNT_HOLDER` or `REGARDED_OWNER`                                                                         |
-
-### W-8BEN Submission (Non-US Individuals)
-
-Key fields: `name`, `country` (citizenship), `permanent_address`, `mailing_address`, `us_tin`, `ftin`, `date_of_birth`, `ftin_not_legally_required`, `has_signed_and_certified`, `signature_timestamp`, `completed_for`. Treaty claim fields: `treaty_claim_is_eligible`, `treaty_claim_country`, `treaty_claim_i_certify_resident`, `treaty_claim_type_of_income` (`ROYALTIES_OTHER`/`BUSINESS_PROFITS`), `treaty_claim_rate_of_withholding`, `treaty_claim_article_paragraph`, `treaty_claim_has_additional_conditions`. (W-8BEN has no `limitation_on_benefits`.)
-
-### W-8BEN-E Submission (Non-US Entities)
-
-Adds `tax_classification` (enum: `CORPORATION`, `PARTNERSHIP`, `SIMPLE_TRUST`, `COMPLEX_TRUST`, `GRANTOR_TRUST`, `ESTATE`, `CENTRAL_BANK_OF_ISSUE`, `FOREIGN_GOVERNMENT_CONTROLLED_ENTITY`, `FOREIGN_GOVERNMENT_INTEGRAL_PART`, `TAX_EXEMPT_ORGANIZATION`, `PRIVATE_FOUNDATION`, `INTERNATIONAL_ORGANIZATION`) plus all W-8BEN fields and the entity treaty fields `treaty_claim_i_certify_requirements` and `treaty_claim_limitation_on_benefits` (enum: `GOVERNMENT`, `TAX_EXEMPT_PENSION`, `OTHER_TAX_EXEMPT_ORGANIZATION`, `PUBLICLY_TRADED_CORPORATION`, `SUBSIDIARY`, `COMPANY_MEETS_EROSION_TEST`, `COMPANY_MEETS_DERIVATIVE_TEST`, `COMPANY_MEETS_BUSINESS_TEST`, `FAVORABLE_DETERMINATION`, `NO_LOB_ARTICLE`, `OTHER_ARTICLE_PARAGRAPH`).
-
-### Self-Certification Submission (CRS/CARF/DAC8)
-
-| Field                 | Type   | Description                                                                                          |
-| --------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
-| `name`                | string | Name                                                                                                 |
-| `permanent_address` / `mailing_address` | object | Addresses                                                                       |
-| `classification`      | enum   | `INDIVIDUAL`, `FINANCIAL_INSTITUTION_DEPOSITORY_INSTITUTION`, `FINANCIAL_INSTITUTION_CUSTODIAL_INSTITUTION`, `FINANCIAL_INSTITUTION_INSURANCE_COMPANY`, `FINANCIAL_INSTITUTION_NON_REPORTING`, `FINANCIAL_INSTITUTION_INVESTMENT_ENTITY_MANAGED`, `FINANCIAL_INSTITUTION_INVESTMENT_ENTITY_OTHER`, `ACTIVE_NFE_GOVERNMENT_ENTITY`, `ACTIVE_NFE_CENTRAL_BANK`, `ACTIVE_NFE_INTERNATIONAL_ORGANIZATION`, `ACTIVE_NFE_PUBLIC_CORPORATION`, `ACTIVE_NFE_OTHER`, `PASSIVE_NFE` |
-| `entity_type`         | enum   | `TRUST`, `SIMILAR_TO_TRUST`, `OTHER`                                                                |
-| `tax_residences`      | array  | `country`, `tin`, `tin_not_required`, `tin_not_required_reason` (`NOT_ISSUED`/`NOT_REQUIRED`/`OTHER`), `tin_not_required_reason_other` |
-| `controlling_persons` | array  | See below                                                                                            |
-| `date_of_birth` / `city_of_birth` / `country_of_birth` / `country_of_citizenship` | — | Individual details                                     |
-| `giin`                | string | For financial institutions                                                                           |
-| `residence_by_investment_confirmed` | boolean | CBI/RBI confirmation                                                                    |
-| `signature_capacity`  | enum   | `OWNER`, `AUTHORIZED_SIGNER`, `TRUSTEE`, `EXECUTOR`, `GUARDIAN`, `OTHER`                            |
-| `has_signed_and_certified` / `signature_date` | — | Certification                                                              |
-
-**Controlling person fields:** `name`, `address`, `mailing_address`, `date_of_birth`, `city_of_birth`, `country_of_birth`, `country_of_citizenship`, `ownership_percentage`, `residence_by_investment_confirmed`, `tax_residences`, `role` (`SETTLOR`, `TRUSTEE`, `PROTECTOR`, `BENEFICIARY`, `OWNER`, `SENIOR_MANAGING_OFFICIAL`, `OTHER`, `OTHER_MEANS`, plus `_EQUIVALENT` variants).
-
-### Tax Documentation Status Response
-
-Root: `days_since_establishment`, plus per-form sections `w_form_questionnaire`, `dps_questionnaire`, `self_certification`. (`submission_status` and `DAC7_interview` are **deprecated** — use `dps_questionnaire` for DAC7/DPS.)
-
-- `w_form_questionnaire`: `type` (`W-9`/`W-8BEN`/`W-8BEN-E`), `data_collection_status` (`COMPLETE`/`INCOMPLETE`), `tin_status` (`PENDING`, `INVALID_DATA`, `VALID_SSN_MATCH`, `VALID_EIN_MATCH`, `VALID_SSN_EIN_MATCH`, `MISMATCH`, `TIN_NOT_ISSUED`, `ERROR`), `tax_documentation_status` (`VALID`/`INVALID`), `treaty_claim_status`, `expiration_date`, `tin_validation_date`, `needs_resubmission`, `issues[]`.
-- `dps_questionnaire`: `vat_status` (`PENDING`, `VALID`, `INVALID`, `INSUFFICIENT_DATA`, `NOT_REQUIRED`, `NON_EU`), plus the common status/expiration/`issues` fields.
-- `self_certification`: `tax_documentation_status`, `data_collection_status`, `needs_resubmission`, `issues[]`.
-
-**Issue object:** `issue_type`, `status` (`OPEN`/`IN_REVIEW`/`RESOLVED`), `created_at`, `details`. `issue_type` values: `CHANGE_IN_CIRCUMSTANCES`, `CARE_OF_PERMANENT_ADDRESS`, `PO_BOX_PERMANENT_ADDRESS`, `US_PERMANENT_ADDRESS`, `TREATY_COUNTRY_MISMATCH`, `US_INDICIA`, `WITHHOLDING_DOCUMENTATION`, `INCOMPLETE_ADDRESS`, `INCOMPLETE_DATA`, `INCONSISTENT_DATA`, `INCOMPLETE_CLASSIFICATION`, `INCOMPLETE_US_TIN`, `INCOMPLETE_TREATY_CLAIM`, `INCOMPLETE_GIIN`, `CBI_RBI_CONFIRMATION`. (Curing of open W-8 issues is handled client-side via the React SDK `TaxbitCuringDocumentation` component.)
-
-### Document Generation & Treaty Rates
-
-- `POST .../document` body: `document_type` (`W-9`, `W-8BEN`, `W-8BEN-E`, `W-8IMY`, `SELF_CERTIFICATION`). Returns `id`, `type`, `status` (`PROCESSING`/`FINISHED`/`ERROR`), `url` (present once `FINISHED`). Poll `GET .../document/{document-id}` until `FINISHED`.
-- `GET /tax-treaty-rates?country=<name or ISO alpha-2>` (required). Returns `general_rates` (`interest`, `dividends`) and `special_rates` (`interest`, `dividends`, `other_income`, each `{rate, article}`). 1042-S income codes: interest `01`, dividends `06`, other income `23`.
-- `GET .../tax-documentation-data` supports `unmask=true` to return unmasked TINs.
-
-## Gains
-
-| Method | Path               | Description                                                                                     |
-| ------ | ------------------ | ----------------------------------------------------------------------------------------------- |
-| GET    | `/gains`           | All gains — detailed cost bases, proceeds, and gains/losses (IRS Form 8949 / 1099-B line items) |
-| GET    | `/gains/breakdown` | Short-term, long-term, and total gains/losses                                                   |
-| GET    | `/gains/summary`   | Per-asset gains totals for a specified period                                                   |
-
-Common query params: `account_id`, `start_date`, `end_date` (`breakdown`/`summary` require the dates), `page_size` (max 500 for `/gains`), `continuation_key`. `/gains` also accepts `client_disposition_transaction_id` (up to 25). Optional `x-user-id` header. Reads return `calculation_status` (`in_progress`/`complete`); poll until `complete`. `gain_type` is `long-term`/`short-term`.
-
-## Inventory
-
-| Method | Path                   | Description                                                               |
-| ------ | ---------------------- | ------------------------------------------------------------------------- |
-| GET    | `/inventory`           | Lots and summary for a single asset (requires `asset_id` or `asset_code`) |
-| GET    | `/inventory/summaries` | Summary of total cost and quantity for each undisposed asset              |
-
-`/inventory` params: `account_id`, `asset_id` **or** `asset_code` (required), `offset`, `limit` (default 25), `include_summary` (default true), `price` (for unrealized gain/loss), `lots_ordered_by` (`HIFO`/`FIFO`/`LIFO`/`LOFO`). Lots are sorted by the requested disposition method.
-
-### Transfer Lots
-
-| Method | Path                                           | Description                                                    |
-| ------ | ---------------------------------------------- | -------------------------------------------------------------- |
-| POST   | `/transfer-lots/transactions/{transaction-id}` | Create transfer lots with cost bases (replaces existing lots)  |
-| GET    | `/transfer-lots/transactions/{transaction-id}` | Get transfer lots for a transaction                            |
-| DELETE | `/transfer-lots/transactions/{transaction-id}` | Delete transfer lots                                           |
-| GET    | `/transfer-lots/transactions`                  | Get transfer lots for multiple transactions (`account_id` + up to 25 `client_transaction_id`) |
-
-POST body: `effective_datetime` (optional), `transfer_lots[]` with `quantity`, `cost_basis` (≥0), `acquisition_transaction_datetime`.
-
-## Disposition Methods
-
-| Method | Path                                                      | Description                               |
-| ------ | --------------------------------------------------------- | ----------------------------------------- |
-| POST   | `/accounts/{id}/disposition-methods/history`              | Create disposition methods for an account |
-| PATCH  | `/accounts/{id}/disposition-methods/history/{history-id}` | Update a disposition method record        |
-| DELETE | `/accounts/{id}/disposition-methods/history/{history-id}` | Delete a disposition method record        |
-| GET    | `/accounts/{id}/disposition-methods/history`              | Get disposition methods for an account    |
-| GET    | `/filers/{id}/disposition-methods/history`                | Get disposition methods for a filer       |
-
-Body/response items: `disposition_method`, `effective_datetime`, `id`. POST returns **201**.
-
-**The accepted method list differs by endpoint.** These history endpoints accept only `HIFO`, `FIFO`, `LIFO`, `LOFO`. `POST /accounts` and `PATCH /accounts/{id}` additionally accept `AUSTRIA`. `SPECID` is neither — it is selected per transaction via `disposition_method: "SPECID"` together with `inventory_lots`.
-
-## Form Items
-
-| Method | Path                                         | Description                                                         |
-| ------ | -------------------------------------------- | ------------------------------------------------------------------- |
-| GET    | `/users/{user-id}/form-items/{form-item-id}` | Get a form item                                                     |
-| PUT    | `/users/{user-id}/form-items/{form-item-id}` | Upsert a form item                                                  |
-| DELETE | `/users/{user-id}/form-items/{form-item-id}` | Delete a form item                                                  |
-| POST   | `/form-items/batch`                          | Upsert a collection of form items (max 100)                         |
-| GET    | `/users/{user-id}/form-items`                | Get all form items for a user within a tax year                     |
-| GET    | `/form-items/aggregates/{document-type}`     | Aggregates by document type (`1099_B` or `1099_DA` only)            |
-
-- `GET /users/{user-id}/form-items` requires `tax_year` and `document_type` (`1099_B`, `1099_INT`, `1099_DIV`, `1099_DA`, `1099_MISC`, `1099_NEC`, `1099_K`, `1099_R`, `5498`); `1099_B` supports `continuation_key`.
-- `POST /form-items/batch` is partial-success and returns `{ successes[], failures[] }` (no `data` envelope). `successes[]` items hold `form_item`. `failures[]` items hold `form_item` plus a string `error` giving the reason, e.g. `"Invalid 1099b_item object."`. There is no positional `index` — match failures back to your input by `form_item.id`.
-- Aggregates return `document_type`, `record_count`, `proceeds`, `cost_basis`. Filter by date range **or** disposed-date range, never both.
-
-## Documents
-
-| Method | Path                           | Description                                                                     |
-| ------ | ------------------------------ | ------------------------------------------------------------------------------- |
-| GET    | `/accounts/{id}/tax-documents` | Get released tax documents for an account (latest of each type/year by default) |
-
-Query params: `include_historical` (default false), `url_expiration_time` (seconds, default 600, max 3600). Each document has `id`, `type` (`GAIN_LOSS_SUMMARY`, `1042_S`, `1099_DA`, `1099_B`, `1099_DIV`, `1099_INT`, `1099_K`, `1099_MISC`, `1099_NEC`, `1099_R`, `5498`, `RMD_STATEMENT`, `TRANSACTION_SUMMARY`, `UK_GAIN_LOSS_SUMMARY`, `DAC7`, plus `_PDF` variants), `year`, `revision`, `revision_type` (`ORIGINAL`/`CORRECTION`/`VOID`), `created_date`, `url`, `is_filed`.
-
-## Reports
-
-Asynchronous bulk report generation. Trigger a report, poll for completion, then download from a pre-signed URL.
-
-| Method | Path                                       | Description                          |
-| ------ | ------------------------------------------ | ------------------------------------ |
-| POST   | `/reports/inventory-summary`               | Trigger an inventory summary report  |
-| GET    | `/reports/inventory-summary/{reportId}`    | Poll status / get the download URL   |
-
-- POST body: `as_of_timestamp` (ISO-8601 UTC, **required**), `account_ids` (optional array, max 10,000; omit for all accounts). Returns **202** with `report_id` and `status: "pending"`.
-- GET returns `status` (`pending`/`processing`/`completed`/`failed`); when `completed`, includes `download_url` (pre-signed, valid **15 minutes** — re-GET for a fresh one), `completed_at`, `expires_at`, and `metadata`. Reports are retained **30 days**.
-
-## Filers
-
-A filer is the legal entity responsible for filing tax forms with tax authorities. Tenants may have multiple filers, one marked `is_default: true`. (Filers replace the former "Payers" concept — Payers endpoints no longer exist.) Only `name` is required to create one; other fields are needed to generate specific form types.
-
-| Method | Path            | Description      | Success |
-| ------ | --------------- | ---------------- | ------- |
-| POST   | `/filers`       | Create a filer   | 201     |
-| GET    | `/filers`       | Get all filers   | 200     |
-| GET    | `/filers/{id}`  | Get a filer      | 200     |
-| PATCH  | `/filers/{id}`  | Update a filer   | 200     |
-| DELETE | `/filers/{id}`  | Delete a filer   | 204     |
-
-`DELETE` returns **409** if the filer is the default or has associated accounts.
-
-**Create/Update fields:**
-
-| Field                          | Type    | Required | Description                                                                              |
-| ------------------------------ | ------- | -------- | ---------------------------------------------------------------------------------------- |
-| `name`                         | string  | Yes      | Legal name of the filer                                                                  |
-| `address`                      | object  | No       | Standard address                                                                         |
-| `ein` / `tin`                  | string  | No       | Employer / Taxpayer Identification Number                                                 |
-| `tax_country_code`             | string  | No       | ISO 3166-1 alpha-2                                                                        |
-| `vat_id` / `vat_country`       | string  | No       | VAT registration (`vat_id` returned masked as `vat_id_masked`)                           |
-| `contact_name` / `contact_title` / `contact_email` / `contact_phone` | string | No | Contact details (phone in E.164)                     |
-| `giin`                         | string  | No       | Global Intermediary Identification Number                                                |
-| `arn`                          | string  | No       | ATO Reference Number (12 numeric digits)                                                 |
-| `rtn`                          | string  | No       | Routing Transit Number                                                                   |
-| `disposition_method`           | enum    | No       | `HIFO`, `FIFO`, `LIFO`, `LOFO` (defaults to `FIFO`)                                     |
-| `form_1099_k_filer_type`       | enum    | No       | `PAYMENT_SETTLEMENT_ENTITY`, `ELECTRONIC_PAYMENT_FACILITATOR_OR_OTHER_THIRD_PARTY`       |
-| `form_1099_k_transaction_type` | enum    | No       | `PAYMENT_CARD_TRANSACTIONS`, `THIRD_PARTY_NETWORK_TRANSACTIONS`                          |
-| `form_1042_s_chapter_3_status` | enum    | No       | Chapter 3 withholding status (25 values — see docs)                                      |
-| `form_1042_s_chapter_4_status` | enum    | No       | Chapter 4 (FATCA) status (38 values — see docs)                                          |
-| `cesop_psp_ids`                | array   | No       | CESOP PSP identifiers (`psp_id`, `country`, `description`)                                |
-| `cra_account_number`           | string  | No       | Canada Revenue Agency account number                                                     |
-| `cra_account_number_type`      | enum    | No       | `BN9`, `BN15`, `Trust`, `NR4`                                                            |
-| `cra_representative_identifier`| string  | No       | 7 alphanumeric characters                                                                |
-| `pse_name` / `pse_telephone_number` | string | No  | Payment Settlement Entity details                                                        |
-| `dac7_receiving_member_state`  | enum    | No       | EU member state code (27 values: AT, BE, BG, HR, CY, CZ, DK, EE, FI, FR, DE, GR, HU, IE, IT, LV, LT, LU, MT, NL, PL, PT, RO, SK, SI, ES, SE) |
-
-**Response** includes all submitted fields plus system-generated: `id` (UUID), `tenant_id` (UUID), `date_created`, `date_modified`, `is_default`, `vat_id_masked`.
-
-## Withholding
-
-| Method | Path                    | Description                                          |
-| ------ | ----------------------- | ---------------------------------------------------- |
-| GET    | `/withholding/austria`  | Austrian KESt withholding balance for an account     |
-
-Applies only to accounts whose disposition method is `AUSTRIA`. Calling it for any other account returns **409**.
-
-**Query params:** `account_id` (required unless `x-user-id` is supplied), `tax_year` (Europe/Vienna calendar year), `transaction_id` (your external id).
-
-**Response:**
-- `summary.year_to_date_balance` — EUR withholding for the year to date, after loss compensation
-- `summary.latest_transaction_datetime` — nullable, null before any Austria calculation has run
-- `transaction` — nullable. Populated only when `transaction_id` was supplied **and** that transaction has been calculated. Carries `change_in_balance`, `transaction_datetime`, `transaction_id`
-- `tax_year` — the calendar year the summary covers
-- `fiat_asset` — nullable denomination asset
-
-The **27.5% KESt rate is already applied** to the returned amounts. There is no discrete rate field.
-
-**Polling pattern:** after submitting a transaction, poll with `transaction_id` until `transaction` is non-null, then release funds. Do not use a `calculation_status` field — the Austria guide shows one in an example, but it does not exist in the actual response schema. `transaction !== null` is the completion signal.
-
-**Gain types under AUSTRIA.** `gain_type` carries 7 values, not 2: `long-term`, `short-term`, `at-new-stock`, `at-user-basis`, `at-missing-basis`, `at-old-stock-long-term`, `at-old-stock-short-term`. The last five are Austrian inventory pools, and one disposal can emit a row per pool.
-
-## Real-Time TIN Validation
-
-| Method | Path                                  | Description                |
-| ------ | ------------------------------------- | -------------------------- |
-| POST   | `/validations/us-tin`                 | Validate a US TIN and name |
-| GET    | `/validations/us-tin/{validation_id}` | Get validation results     |
-
-- POST body: `tin`, `legal_name` (both required). Query `use_async` (`"true"`/`"false"`, default false) — when true, returns `PENDING` immediately.
-- GET query: `unmask_tin` (`"true"`/`"false"`, default false).
-- Response: `id`, `legal_name`, `tin` (masked), `status`, `validation_date`. `status` values: `PENDING`, `VALID_SSN_MATCH`, `VALID_EIN_MATCH`, `VALID_SSN_EIN_MATCH`, `MISMATCH`, `TIN_NOT_ISSUED`.
+## Endpoint Reference
+
+Every endpoint (65 in all) is documented in `reference/`, generated from Taxbit's OpenAPI spec. **Read the file for the area you're working in, then the endpoint's own file**; don't guess field names, enums, or paths from memory.
+
+- `reference/<area>.md`: notes on the area's behavior, then a table of its endpoints (method, path, summary, token type), each linking to its file
+- `reference/<area>/<endpoint>.md`: path and query parameters, every request body field with type, required flag and allowed values, an example body, and the response fields
+- `reference/values/<list>.md`: long allowed-value lists (countries, currencies, FATCA and Chapter 3/4 classifications), linked from the fields that use them
+
+Paths in the reference omit the `/v1` prefix, which the base URLs above already include.
+
+| Area | Reference | Endpoints | Covers |
+| --- | --- | --- | --- |
+| Account Owners | [reference/account-owners.md](reference/account-owners.md) | 4 | create, update, retrieve; US TIN validation status |
+| Accounts | [reference/accounts.md](reference/accounts.md) | 3 | create, update, retrieve; transactions list, income, released tax documents |
+| Assets | [reference/assets.md](reference/assets.md) | 6 | configure, list, look up, update, delete assets |
+| Auth Token | [reference/auth-token.md](reference/auth-token.md) | 2 | tenant-scoped and account-owner-scoped tokens |
+| Disposition Methods | [reference/disposition-methods.md](reference/disposition-methods.md) | 5 | per-account and per-filer disposition method history |
+| Documents | [reference/documents.md](reference/documents.md) | 1 | released tax documents for an account |
+| Filers | [reference/filers.md](reference/filers.md) | 5 | full CRUD for filing entities |
+| Form Items | [reference/form-items.md](reference/form-items.md) | 6 | 1099/5498 line items: upsert, batch, list, aggregates |
+| Gains | [reference/gains.md](reference/gains.md) | 3 | gains, breakdown, summary |
+| Inventory | [reference/inventory.md](reference/inventory.md) | 6 | lots and summaries; transfer lots |
+| Real-Time TIN Validation | [reference/real-time-tin-validation.md](reference/real-time-tin-validation.md) | 2 | validate a US TIN and name |
+| Reports | [reference/reports.md](reference/reports.md) | 2 | async inventory summary reports |
+| Tax Documentation | [reference/tax-documentation.md](reference/tax-documentation.md) | 13 | W-9, W-8BEN, W-8BEN-E, W-8IMY, self-certification; status; PDFs |
+| Tax Treaty Rates | [reference/tax-treaty-rates.md](reference/tax-treaty-rates.md) | 1 | treaty withholding rates by country |
+| Transaction Aggregations | [reference/transaction-aggregations.md](reference/transaction-aggregations.md) | 1 | income rollups for an account |
+| Transactions | [reference/transactions.md](reference/transactions.md) | 4 | send (upsert), retrieve, delete |
+| Withholding | [reference/withholding.md](reference/withholding.md) | 1 | Austrian KESt balances |
+
+After a tax documentation submission, check `GET /account-owners/{id}/tax-documentation-status`: its `issues[]` and validation messages are the source of truth for what to fix before resubmitting.
 
 ## Webhooks
 
