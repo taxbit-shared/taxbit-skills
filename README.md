@@ -47,6 +47,7 @@ skills/
   api/SKILL.md                 # Taxbit REST API skill
   api/reference/               # Endpoint reference, generated from the OpenAPI spec
   react-sdk/SKILL.md           # Taxbit React SDK skill
+  react-sdk/reference/         # Styling, curing, and other detail, loaded when needed
 scripts/                       # Reference generator (maintainers)
 src/                           # Notes merged into the reference (maintainers)
 ```
