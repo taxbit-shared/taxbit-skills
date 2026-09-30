@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-30
+
 ### Added
 - **React SDK:** `reference/upgrading-to-6.md`, covering the `@taxbit/react-sdk` 6.0.0 breaking changes (stylesheets, DOM and test selectors, per-language ES build files, host-page accessibility duties) and the non-breaking additions (screen-reader support, focus on step change, server rendering, on-demand languages).
 
