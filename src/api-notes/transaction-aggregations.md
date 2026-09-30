@@ -1,0 +1,1 @@
+Query params: `start_date` (inclusive), `end_date` (exclusive), `roll_up` (`year`/`y`/`month`/`m`). Returns `data.totals` and `data.rollups[]` with `transaction_count`, `income`, `fees` (USD decimal strings).

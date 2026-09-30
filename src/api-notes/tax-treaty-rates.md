@@ -1,0 +1,1 @@
+- `GET /tax-treaty-rates?country=<name or ISO alpha-2>` (required). Returns `general_rates` (`interest`, `dividends`) and `special_rates` (`interest`, `dividends`, `other_income`, each `{rate, article}`). 1042-S income codes: interest `01`, dividends `06`, other income `23`.

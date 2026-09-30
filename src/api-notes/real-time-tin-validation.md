@@ -1,0 +1,1 @@
+- POST body: `tin`, `legal_name` (both required). Query `use_async` (`"true"`/`"false"`, default false) — when true, returns `PENDING` immediately.
