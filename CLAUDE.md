@@ -22,7 +22,8 @@ skills/
     <area>.md                        #   area notes + endpoint table
     <area>/<endpoint>.md             #   one file per endpoint
     values/<list>.md                 #   long allowed-value lists
-  react-sdk/SKILL.md                 # Taxbit React SDK skill
+  react-sdk/SKILL.md                 # Taxbit React SDK skill: core usage + pointers
+  react-sdk/reference/               # Task-specific detail (styling, curing, adaptive mode, ...)
 scripts/generate-api-reference.mjs   # Builds api/reference/ from the OpenAPI spec
 src/api-notes/<area>.md              # Area notes merged into api/reference/<area>.md
 src/field-notes.mjs                  # Notes for body fields the spec doesn't explain
@@ -99,7 +100,14 @@ Known documentation errors to keep flagging in notes: the Austria guide shows a 
    - `https://apidocs.taxbit.com/docs/how-the-sdk-works.md`
    - Check the latest version with `npm view @taxbit/react-sdk version` (and `dist-tags`) — the `latest` tag is the version to document (was `5.0.0` at last regen; the `beta` tag lags far behind `latest` and should be ignored).
    - **Trust the package's bundled `.d.ts` files over the web docs.** The apidocs pages lag the published package; when they disagree, the type declarations in `dist/src/` win.
-2. Write the skill file with this structure:
+2. Write the skill with this structure. **Keep `SKILL.md` under ~20 KB / ~5,000 tokens** (Anthropic: under 500 lines; after compaction only a skill's first 5,000 tokens are kept). Core usage stays in `SKILL.md`. Task-specific detail goes in `skills/react-sdk/reference/<topic>.md`, with a short pointer in `SKILL.md` that keeps the facts an agent must not get wrong (for styling: no CSS variables, override the `taxbit-*` classes):
+   - `reference/styling.md`: the full CSS / Styling & Customization section
+   - `reference/curing.md`: `TaxbitCuringDocumentation` and issue types
+   - `reference/adaptive-mode.md`, `reference/on-progress.md`, `reference/tax-residencies.md`, `reference/languages.md`
+   - `reference/upgrading-to-5.md`: breaking changes (the pointer lists them in one line)
+   - `reference/security.md`: the full checklist (the pointer keeps the essentials)
+
+   Sections, in order:
    - YAML frontmatter: `name: react-sdk`, `description` (trigger conditions), `allowed-tools` (Read, Grep, Glob, Bash, Write, Edit, WebFetch)
    - Role statement: "You are a Taxbit React SDK integration assistant..."
    - Package info (npm name, latest version, install command, React/TypeScript compatibility)

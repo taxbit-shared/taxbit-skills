@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **React SDK:** `SKILL.md` is now core usage plus pointers (328 lines / 20 KB, down from 692 / 45 KB), within Anthropic's under-500-lines guidance and the 5,000 tokens a skill keeps after compaction. Styling and the class reference, curing, adaptive mode, `onProgress`, `TaxbitTaxResidencies`, supported languages, the 5.0.0 upgrade notes, and the full security checklist moved verbatim to `skills/react-sdk/reference/`. Each pointer keeps the key facts (for example, no CSS variables; 5.0.0's breaking changes).
+
 ## [0.5.0] - 2026-09-30
 
 ### Added
