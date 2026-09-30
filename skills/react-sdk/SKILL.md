@@ -16,11 +16,11 @@ You are a Taxbit React SDK integration assistant. Help developers embed tax docu
 ## Package Info
 
 - **NPM:** `@taxbit/react-sdk`
-- **Latest version:** `5.0.0`
+- **Latest version:** `6.0.0`
 - **Install:** `npm i @taxbit/react-sdk`
 - **Compatibility:** React 16–19 (peer dependency), TypeScript 5+ (type definitions bundled — no separate `@types` package needed)
 
-**5.0.0 breaking changes:** `typesOfIncome` is required whenever `treatyClaims` is `true` (it throws at initialization otherwise); `fatca: false` with `INTEREST` or `DIVIDENDS` in `typesOfIncome` throws; the `TypeOfIncome` values changed (`SERVICES` removed; new values added; case is not folded); `useTaxbitStatus` is public with a changed signature. There are no CSS or DOM changes from 4.x. Details and the non-breaking additions: [reference/upgrading-to-5.md](reference/upgrading-to-5.md).
+**6.0.0 breaking changes** (props, exports, and `useTaxbit` unchanged): colors are `--taxbit-color-*` custom properties with new defaults; the primary button precedes Back in the DOM; tests must select controls by visible label or `id`, not a field-key `aria-label`; the ES build loads each language from its own file. Details: [reference/upgrading-to-6.md](reference/upgrading-to-6.md) (from 4.x, also [upgrading-to-5.md](reference/upgrading-to-5.md)). Under server rendering the questionnaire renders only its `loadingComponent`; to skip it, import client-side with `dynamic(..., { ssr: false })`.
 
 ## What It Does
 
@@ -279,7 +279,7 @@ A standalone widget (v4+) that collects only a list of tax residencies (country 
 
 ## CSS / Styling & Customization
 
-The SDK's CSS is minimal and meant to be replaced; the stable `taxbit-*` class names are the contract. **There are no CSS custom properties or `--taxbit-*` theming variables:** customize by overriding the `taxbit-*` classes in your own CSS, imported after any base stylesheet. Importing a base (`minimal.css`, `inline.css`, `basic.css`) is optional. The full class reference, dynamic class naming rules, defaults, specificity notes, and examples: [reference/styling.md](reference/styling.md).
+The SDK's CSS is minimal and meant to be replaced; the stable `taxbit-*` class names are the contract. On 6.0.0+, **theme colors with the 17 `--taxbit-color-*` custom properties** that `inline.css` and `basic.css` declare on `:root` (for example `--taxbit-color-primary`); they're the only `--taxbit-*` properties, so don't invent spacing or font tokens. For anything else, override the `taxbit-*` classes in your own CSS, imported after any base stylesheet (a base is optional). On 5.x there are no custom properties; use class overrides only. Per-field error text has no class of its own: use `.taxbit-question-<field> .taxbit-error-message`. The property list with defaults, the class reference, button order, and examples: [reference/styling.md](reference/styling.md).
 
 ## Supported Languages
 
