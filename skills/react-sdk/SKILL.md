@@ -270,7 +270,7 @@ A standalone widget (v4+) that collects only a list of tax residencies (country 
 
 ## onProgress Callback
 
-`onProgress` reports the user's position in the multi-step form (`Progress`: locale, percent complete, current step id). The type and step ids: [reference/on-progress.md](reference/on-progress.md).
+`onProgress` reports the user's position in the multi-step form: `percentComplete` is a whole number from 0 to 100 (not 0–1), plus `stepNumber`, `totalSteps`, and the current step id. The type and step ids: [reference/on-progress.md](reference/on-progress.md).
 
 ## Regional & Proxy Configuration
 

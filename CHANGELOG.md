@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **React SDK:** `onProgress`'s `percentComplete` is documented as an integer from 0 to 100 (`Math.round(stepIndex / (steps.length - 1) * 100)`), not left ambiguous between 0–1 and 0–100.
+
 ## [0.6.0] - 2026-09-30
 
 ### Added
