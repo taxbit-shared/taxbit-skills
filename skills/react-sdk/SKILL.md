@@ -55,7 +55,7 @@ export default function App() {
 }
 ```
 
-Set `questionnaire` to `"DPS"` or `"SELF-CERT"` to test other forms. Callbacks still fire in demo mode so you can inspect data.
+Set `questionnaire` to `"DPS"` or `"SELF-CERT"` to test other forms. In demo mode only `onSubmit` and `onProgress` are allowed: the types make `onSuccess`, `onError`, `onSettled`, `loadingComponent`, `bearerToken`, `region`, `staging`, and the proxy props `never`, so show your own confirmation from `onSubmit`.
 
 ## Production Quick Start
 
@@ -77,11 +77,11 @@ function TaxFormPage({ bearerToken }) {
 
 ## Questionnaire Types
 
-| Value         | Purpose                                                                                              |
-| ------------- | ---------------------------------------------------------------------------------------------------- |
-| `"W-FORM"`    | Collects W-9 (US persons) or W-8BEN / W-8BEN-E / W-8IMY (non-US persons) for 1099 reporting and FDAP withholding compliance |
-| `"DPS"`       | Digital Platform Seller — DAC7 (EU), UK, NZ, and Canada MRDP obligations                             |
-| `"SELF-CERT"` | CRS, CARF, DAC8 self-certification per OECD guidance                                                  |
+| Value | Purpose |
+| --- | --- |
+| `"W-FORM"` | Collects W-9 (US persons) or W-8BEN / W-8BEN-E / W-8IMY (non-US persons) for 1099 reporting and FDAP withholding compliance |
+| `"DPS"` | Digital Platform Seller — DAC7 (EU), UK, NZ, and Canada MRDP obligations |
+| `"SELF-CERT"` | CRS, CARF, DAC8 self-certification per OECD guidance |
 | `"RESIDENCIES"` | Tax-residency collection only, backing the `TaxbitTaxResidencies` widget. Present in the `QuestionnaireProp` type but not yet described in the web docs |
 
 ## Authentication
@@ -144,30 +144,31 @@ function TaxForm() {
 
 ## TaxbitQuestionnaire Props
 
-| Prop                       | Type                                    | Required | Default                           | Description                                                            |
-| -------------------------- | --------------------------------------- | -------- | --------------------------------- | ---------------------------------------------------------------------- |
-| `bearerToken`              | string                                  | Yes*     | —                                 | Account-owner-scoped token. *Not required when `demoMode` is true      |
-| `questionnaire`            | `'W-FORM' \| 'DPS' \| 'SELF-CERT' \| 'RESIDENCIES'` | Yes | —                        | Form type to render                                                    |
-| `data`                     | `ClientTaxDocumentation`                | No       | —                                 | Pre-collected data; overrides server data if both exist (see Adaptive Mode) |
-| `adaptiveMode`             | `'full' \| 'skipLock' \| 'skipEdit'`    | No       | `'full'`                          | Behavior with pre-filled / prior data                                  |
-| `prepopulateWithSavedData` | boolean                                 | No       | `true`                            | Fetch the prior submission on mount; set `false` to skip server prefill |
-| `language`                 | string (locale)                         | No       | `'en-us'` (W-FORM), `'en-gb'` (DPS/SELF-CERT) | Pre-select form language                                    |
-| `treatyClaims`             | boolean                                 | No       | `false`                           | W-FORM only: enable treaty claim questions in W-8 flows                |
-| `typesOfIncome`            | `TypeOfIncome \| string \| (TypeOfIncome \| string)[]` | Yes if `treatyClaims` | —      | W-FORM only: income types the account can generate. Drives treaty filtering. Throws if missing or unrecognized |
-| `fatca`                    | boolean                                 | No       | `true`                            | New in 5.0.0. W-FORM only: enable FATCA (Chapter 4) collection. Throws if `false` while `typesOfIncome` includes `INTEREST` or `DIVIDENDS` |
-| `realTimeTinValidation`    | boolean                                 | No       | `false`                           | W-FORM only: validate name/TIN against IRS in real time (W-9)          |
-| `region`                   | `'US' \| 'EU'`                          | No       | `'US'`                            | Route requests to the selected Taxbit region                           |
-| `dateFormat`               | `'mdy' \| 'dmy' \| 'ymd'`               | No       | `'mdy'`                           | Date picker order                                                      |
-| `demoMode`                 | boolean                                 | No       | `false`                           | Render without server communication; no token needed                   |
-| `proxyDomain`              | string                                  | No       | —                                 | Route API calls through your own proxy (mutually exclusive with `region`) |
-| `proxyHeaders`             | `Record<string, string>`                | No       | —                                 | Extra headers for the proxy (`authorization` / `content-type` reserved) |
-| `poweredByTaxbit`          | boolean                                 | No       | `false`                           | Show "Powered by Taxbit" footer                                        |
-| `loadingComponent`         | ReactNode                               | No       | "Retrieving interview status…"    | Custom loading UI                                                      |
-| `onProgress`               | `(progress: Progress) => void`          | No       | —                                 | Fires on navigation (Next, Back, Cancel, Submit)                       |
-| `onSubmit`                 | `(data: ClientTaxDocumentation) => void`| No       | —                                 | Fires after client-side validation, before the API completes          |
-| `onSuccess`                | `(data: ClientTaxDocumentation) => void`| No       | —                                 | Fires after a successful API submission                                |
-| `onError`                  | `(error: Error) => void`                | No       | Logs to console                   | Fires on submission error                                              |
-| `onSettled`                | `(data: ClientTaxDocumentation) => void`| No       | —                                 | Fires after `onSuccess` or `onError`                                   |
+| Prop | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `bearerToken` | string | Yes* | — | Account-owner-scoped token. *Not required when `demoMode` is true |
+| `questionnaire` | `'W-FORM' \| 'DPS' \| 'SELF-CERT' \| 'RESIDENCIES'` | Yes | — | Form type to render |
+| `data` | `ClientTaxDocumentation` | No | — | Pre-collected data; overrides server data if both exist (see Adaptive Mode) |
+| `adaptiveMode` | `'full' \| 'skipLock' \| 'skipEdit'` | No | `'full'` | Behavior with pre-filled / prior data |
+| `prepopulateWithSavedData` | boolean | No | `true` | Fetch the prior submission on mount; set `false` to skip server prefill |
+| `language` | string (locale) | No | `'en-us'` (W-FORM), `'en-gb'` (DPS/SELF-CERT) | Pre-select form language |
+| `treatyClaims` | boolean | No | `false` | W-FORM only: enable treaty claim questions in W-8 flows |
+| `typesOfIncome` | `TypeOfIncome \| string \| (TypeOfIncome \| string)[]` | Yes if `treatyClaims` | — | W-FORM only: income types the account can generate. Drives treaty filtering. Throws if missing or unrecognized |
+| `fatca` | boolean | No | `true` | New in 5.0.0. W-FORM only: enable FATCA (Chapter 4) collection. Throws if `false` while `typesOfIncome` includes `INTEREST` or `DIVIDENDS` |
+| `realTimeTinValidation` | boolean | No | `false` | W-FORM only: validate name/TIN against IRS in real time (W-9) |
+| `region` | `'US' \| 'EU'` | No | `'US'` | Route requests to the selected Taxbit region |
+| `staging` | boolean | No | `false` | Call the staging API (`api.multi1.enterprise-staging.taxbit.com`). **Required when the token was minted on staging**; without it the SDK calls production and a staging token gets `401`. Not with `proxyDomain` or `demoMode` |
+| `dateFormat` | `'mdy' \| 'dmy' \| 'ymd'` | No | `'mdy'` | Date picker order |
+| `demoMode` | boolean | No | `false` | Render without server communication; no token needed |
+| `proxyDomain` | string | No | — | Route API calls through your own proxy (mutually exclusive with `region`) |
+| `proxyHeaders` | `Record<string, string>` | No | — | Extra headers for the proxy (`authorization` / `content-type` reserved) |
+| `poweredByTaxbit` | boolean | No | `false` | Show "Powered by Taxbit" footer |
+| `loadingComponent` | ReactNode | No | "Retrieving interview status…" | Custom loading UI (not allowed with `demoMode`) |
+| `onProgress` | `(progress: Progress) => void` | No | — | Fires on navigation (Next, Back, Cancel, Submit) |
+| `onSubmit` | `(data: ClientTaxDocumentation) => void`| No | — | Fires after client-side validation, before the API completes |
+| `onSuccess` | `(data: ClientTaxDocumentation) => void`| No | — | Fires after a successful API submission (not allowed with `demoMode`) |
+| `onError` | `(error: Error) => void` | No | Logs to console | Fires on submission error (not allowed with `demoMode`) |
+| `onSettled` | `(data: ClientTaxDocumentation) => void`| No | — | Fires after `onSuccess` or `onError` (not allowed with `demoMode`) |
 
 ## Adaptive Mode
 
@@ -206,24 +207,24 @@ function TaxStatus({ bearerToken }) {
 }
 ```
 
-**Parameters:** `bearerToken` (required), `questionnaire` (required), `onError`, `region`, `proxyDomain`, `proxyHeaders`.
+**Parameters:** `bearerToken` (required), `questionnaire` (required), `onError`, `region`, `staging` (set when the token came from staging), `proxyDomain`, `proxyHeaders`, `prepopulateWithSavedData`.
 
 **Return values:**
 
-| Return                     | Type                                       | Description                                                        |
-| -------------------------- | ------------------------------------------ | ------------------------------------------------------------------ |
-| `statusData`               | `ClientTaxDocumentationStatus \| undefined`| Documentation status for this account owner                        |
-| `serverData`               | `ClientTaxDocumentation \| undefined`      | Last submitted data                                                |
-| `error`                    | `Error \| undefined`                       | Fetch or token error                                               |
-| `isLoading`                | boolean                                    | True while the status fetch is in flight                           |
-| `needsCuringDocumentation` | boolean                                    | True when the user has ≥1 `OPEN` curable W-Form issue              |
-| `canGetDocumentUrl`        | boolean                                    | True once W-Form or Self-Cert is `COMPLETE` (always false for DPS) |
-| `generateDocumentUrl`      | `() => void`                               | Triggers PDF URL generation                                        |
-| `isGeneratingDocumentUrl`  | boolean                                    | True while URL generation is in flight                             |
-| `documentUrl`              | `string \| undefined`                      | Temporary PDF URL; refreshed roughly every 4 minutes               |
-| `refresh`                  | `() => Promise<void>`                      | Re-fetch status + submission                                       |
-| `refreshStatus`            | `() => Promise<void>`                      | Re-fetch status only                                               |
-| `refreshSubmission`        | `() => Promise<void>`                      | Re-fetch submission only                                           |
+| Return | Type | Description |
+| --- | --- | --- |
+| `statusData` | `ClientTaxDocumentationStatus \| undefined`| Documentation status for this account owner |
+| `serverData` | `ClientTaxDocumentation \| undefined` | Last submitted data |
+| `error` | `Error \| undefined` | Fetch or token error |
+| `isLoading` | boolean | True while the status fetch is in flight |
+| `needsCuringDocumentation` | boolean | True when the user has ≥1 `OPEN` curable W-Form issue |
+| `canGetDocumentUrl` | boolean | True once W-Form or Self-Cert is `COMPLETE` (always false for DPS) |
+| `generateDocumentUrl` | `() => void` | Triggers PDF URL generation |
+| `isGeneratingDocumentUrl` | boolean | True while URL generation is in flight |
+| `documentUrl` | `string \| undefined` | Temporary PDF URL; refreshed roughly every 4 minutes |
+| `refresh` | `() => Promise<void>` | Re-fetch status + submission |
+| `refreshStatus` | `() => Promise<void>` | Re-fetch status only |
+| `refreshSubmission` | `() => Promise<void>` | Re-fetch submission only |
 
 ### Status shape
 
@@ -270,10 +271,11 @@ A standalone widget (v4+) that collects only a list of tax residencies (country 
 
 ## onProgress Callback
 
-`onProgress` reports the user's position in the multi-step form (`Progress`: locale, percent complete, current step id). The type and step ids: [reference/on-progress.md](reference/on-progress.md).
+`onProgress` reports the user's position in the multi-step form: `percentComplete` is a whole number from 0 to 100 (not 0–1), plus `stepNumber`, `totalSteps`, and the current step id. The type and step ids: [reference/on-progress.md](reference/on-progress.md).
 
 ## Regional & Proxy Configuration
 
+- **Staging:** add `staging` (with a staging-minted token) to `TaxbitQuestionnaire`, `useTaxbit`, and `TaxbitCuringDocumentation`; it targets `api.multi1.enterprise-staging.taxbit.com`.
 - **EU tenants:** add `region="EU"` to the component (and mint the token against the EU token endpoint).
 - **Proxied networks:** set `proxyDomain` (and optional `proxyHeaders`) to route SDK API calls through your own gateway. Your proxy must set the `authorization` and `content-type` headers itself — they are reserved. `proxyDomain` and `region`/`staging` are mutually exclusive.
 
