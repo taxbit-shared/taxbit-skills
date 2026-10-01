@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- **API, React SDK:** account-owner-scoped tokens last **1 hour** (`expires_in: 3600`), not 24 hours; only tenant-scoped tokens last 24 hours. Both skills said both tokens last 24 hours, following *Accessing the API*'s general "Tokens last 24 hours". The account-owner token reference says 1 hour, confirmed against staging tokens. Refresh guidance now reads `expires_in`.
+
+### Fixed
 - **React SDK:** documented the `staging` prop on `TaxbitQuestionnaire` and `useTaxbit` (present since at least 5.0.0). Without it the SDK calls production, so a staging token fails with `401`.
 - **React SDK:** demo mode allows only `onSubmit` and `onProgress`; the skill said callbacks "still fire", but the types make `onSuccess`, `onError`, `onSettled`, and `loadingComponent` `never` there.
 - **React SDK:** `onProgress`'s `percentComplete` is documented as an integer from 0 to 100 (`Math.round(stepIndex / (steps.length - 1) * 100)`), not left ambiguous between 0–1 and 0–100.
