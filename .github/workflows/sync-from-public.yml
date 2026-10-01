@@ -1,0 +1,44 @@
+# Keeps the private mirror (taxbit-private/taxbit-skills) identical to this
+# public repo, so Taxbit's Claude organization can sync the plugin from a
+# private repo. Runs only in the mirror; in the public repo the job is skipped.
+#
+# Edit and merge in taxbit-shared/taxbit-skills only. Commits made directly in
+# the mirror make this job fail (fast-forward only) rather than be overwritten.
+name: Sync from public repo
+
+on:
+  schedule:
+    - cron: '17 * * * *' # hourly
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-from-public
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'taxbit-private/taxbit-skills'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fast-forward main to the public repo
+        run: |
+          git remote add public https://github.com/taxbit-shared/taxbit-skills.git
+          git fetch public main
+          if git merge-base --is-ancestor public/main HEAD; then
+            echo "Already up to date with public/main ($(git rev-parse --short public/main))."
+            exit 0
+          fi
+          if ! git merge-base --is-ancestor HEAD public/main; then
+            echo "::error::The mirror has commits that aren't in the public repo. Make changes in taxbit-shared/taxbit-skills, then reset the mirror's main to match."
+            exit 1
+          fi
+          git push origin public/main:refs/heads/main
+          echo "Fast-forwarded main to $(git rev-parse --short public/main)."
