@@ -148,6 +148,10 @@ The README should be a brief user-facing document with:
 - Project structure tree
 - Links to Taxbit API docs and Claude Code docs
 
+## Private mirror for the Claude organization
+
+Taxbit's Claude organization can only sync plugins from a private repo, so `taxbit-private/taxbit-skills` mirrors this one. `.github/workflows/sync-from-public.yml` runs hourly (and on demand) **only in the mirror** and fast-forwards its `main` to this repo's `main`; the org library syncs from the mirror on each push. Always edit here, never in the mirror: a commit made only in the mirror stops the sync with an error. Changes to files under `.github/workflows/` can't be pushed by the workflow's token, so after changing a workflow, push the mirror once by hand (`git push git@github.com:taxbit-private/taxbit-skills.git main`).
+
 ## Versioning
 
 When tagging a new version:
