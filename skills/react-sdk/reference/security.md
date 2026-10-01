@@ -9,7 +9,7 @@ The SDK handles tax documentation containing PII (TINs, addresses, dates of birt
 - Never fetch the account-owner token client-side — the `client_secret` must stay on the server.
 - Pass the token to your React app via a secure API endpoint, not through URL parameters or global variables.
 - Store tokens in memory (React state/context) or httpOnly secure cookies — never in localStorage or sessionStorage (vulnerable to XSS).
-- Implement proactive token refresh before the 24-hour expiry — don't wait for a failure. When refreshing after a 401, change the component `key` to force a clean remount (see Handling Token Expiration).
+- Account-owner tokens last 1 hour: mint a fresh one before `expires_in` runs out rather than waiting for a failure. When refreshing after a 401, change the component `key` to force a clean remount (see Handling Token Expiration).
 
 ## PII Protection
 

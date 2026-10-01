@@ -108,7 +108,7 @@ const response = await fetch(
 const { access_token } = await response.json();
 ```
 
-Pass `access_token` as the `bearerToken` prop. Tokens expire after 24 hours.
+Pass `access_token` as the `bearerToken` prop. **Account-owner tokens expire after 1 hour** (`expires_in: 3600`), so long sessions need the refresh pattern below. (Tenant tokens, which the SDK never uses, last 24 hours.)
 
 ### Handling Token Expiration
 

@@ -43,11 +43,11 @@ Get `client_id`, `client_secret`, and `tenant_id` from the Taxbit Dashboard → 
 
 ## Authentication
 
-All requests require a Bearer token. There are two token types, each valid for **24 hours** (`expires_in: 86400`). Request bodies are JSON (`application/json`).
+All requests require a Bearer token. There are two token types with **different lifetimes**: tenant-scoped tokens last **24 hours** (`expires_in: 86400`), account-owner-scoped tokens last **1 hour** (`expires_in: 3600`). Always schedule refresh from the response's `expires_in`, not a hard-coded lifetime. Request bodies are JSON (`application/json`).
 
 ### Tenant-Scoped Token
 
-Used for most API operations (account owners, accounts, transactions, gains, inventory, form items, documents, reports, filers, TIN validation).
+Used for most API operations (account owners, accounts, transactions, gains, inventory, form items, documents, reports, filers, TIN validation). Valid for 24 hours; cache it server-side and reuse it.
 
 ```
 POST /oauth/token
@@ -63,7 +63,7 @@ Content-Type: application/json
 
 ### Account-Owner-Scoped Token
 
-Used for tax documentation submission and the React SDK. Scoped to a single account owner.
+Used for tax documentation submission and the React SDK. Scoped to a single account owner. **Valid for 1 hour**, so a user who keeps the form open longer will hit a `401`.
 
 ```
 POST /oauth/account-owner-token
@@ -80,7 +80,7 @@ Content-Type: application/json
 
 - `id` is your external identifier for the account owner. (`account_owner_id`, taking the Taxbit UUID, is the deprecated alias.)
 
-**Token response (both types):**
+**Token response (both types; `expires_in` is `86400` for tenant tokens, `3600` for account-owner tokens):**
 ```json
 {
   "access_token": "eyJhbG...",
@@ -92,7 +92,7 @@ Content-Type: application/json
 
 - Use as `Authorization: Bearer <access_token>` on all subsequent requests.
 - **Never expose `client_secret` in client-side code.** Account-owner tokens must be obtained server-side and passed to the frontend.
-- Refresh proactively before the 24-hour expiry — don't wait for a 401.
+- Refresh proactively before `expires_in` runs out (24 hours for tenant tokens, 1 hour for account-owner tokens) — don't wait for a 401, but handle one by minting a new token and retrying once.
 
 ## Endpoint Reference
 
@@ -177,7 +177,7 @@ Tax data is sensitive and subject to regulatory requirements (IRS IRC 6103, pote
 
 - Store `client_id`, `client_secret`, and `tenant_id` in environment variables or a secrets manager — never in source code.
 - Never log bearer tokens, even at debug level.
-- Implement proactive token refresh before the 24-hour expiry — don't wait for a 401.
+- Refresh tokens before they expire (tenant: 24 hours, account owner: 1 hour; read `expires_in`) — don't wait for a 401.
 - Use the narrowest token scope: prefer account-owner-scoped tokens over tenant-scoped when the operation supports it.
 
 ### PII & Tax Data
