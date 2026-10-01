@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-01
+
 ### Fixed
 - **API, React SDK:** account-owner-scoped tokens last **1 hour** (`expires_in: 3600`), not 24 hours; only tenant-scoped tokens last 24 hours. Both skills said both tokens last 24 hours, following *Accessing the API*'s general "Tokens last 24 hours". The account-owner token reference says 1 hour, confirmed against staging tokens. Refresh guidance now reads `expires_in`.
 
