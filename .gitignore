@@ -10,3 +10,6 @@
 
 # macOS
 .DS_Store
+
+# Weekly docs review scratch (check-for-updates workflow)
+.docs-review/

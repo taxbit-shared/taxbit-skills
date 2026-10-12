@@ -154,7 +154,11 @@ Taxbit's Claude organization can only sync plugins from a private repo, so `taxb
 
 ## Weekly update check
 
-`.github/workflows/check-for-updates.yml` runs `scripts/check-for-updates.mjs` every Monday (and on demand) in this repo only. It compares npm's `latest` `@taxbit/react-sdk` with the version `skills/react-sdk/SKILL.md` documents (the `- **Latest version:**` line, so keep that line's format), and runs `generate-api-reference.mjs --check` against the live spec. If either is behind, it opens one issue saying what to regenerate, or updates the one already open. It closes that issue once both pass. The API check needs the `APIDOCS_TOKEN` secret, a token that can read `taxbit-private/readme-apidocs`; without it the issue says the check was skipped. `node scripts/check-for-updates.mjs --dry-run` runs both checks locally and prints the issue body (`APIDOCS_TOKEN=$(gh auth token)` for the API half).
+`.github/workflows/check-for-updates.yml` runs `scripts/check-for-updates.mjs` every Monday (and on demand) in this repo only. It compares npm's `latest` `@taxbit/react-sdk` with the version `skills/react-sdk/SKILL.md` documents (the `- **Latest version:**` line, so keep that line's format), and runs `generate-api-reference.mjs --check` against the live spec. If either is behind, it opens one issue saying what to regenerate, or updates the one already open. It closes that issue once both pass. The API check needs the `APIDOCS_TOKEN` secret, a token that can read `taxbit-private/readme-apidocs`; without it the issue says the check was skipped.
+
+Before those two checks, a Claude step (`anthropics/claude-code-action`) rereads the docs guides and the SDK package, compares them with the hand-written guidance (everything but `skills/api/reference/`), and writes each mismatch it can quote on both sides to `.docs-review/findings.md`. Those findings go into the same issue. The step needs the `ANTHROPIC_API_KEY` secret; without it the issue says the review was skipped. If the step fails, the run goes red and an open issue stays open. The review's instructions are the `prompt` in the workflow, so edit them there.
+
+`node scripts/check-for-updates.mjs --dry-run` runs the npm and API checks locally and prints the issue body (`APIDOCS_TOKEN=$(gh auth token)` for the API half).
 
 ## Versioning
 

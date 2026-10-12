@@ -6,17 +6,21 @@
 //   node scripts/check-for-updates.mjs             check, then open, update or close the issue
 //   node scripts/check-for-updates.mjs --dry-run   check and print the issue body; touch no issues
 //
-// Two checks:
+// Three checks:
 // - React SDK: npm's `latest` @taxbit/react-sdk against the version SKILL.md documents.
 // - API: `generate-api-reference.mjs --check` against the live spec. Needs
 //   APIDOCS_TOKEN, a token that can read taxbit-private/readme-apidocs; without
 //   it this check is skipped and the issue says so.
+// - Docs review: the workflow's Claude step writes its findings to
+//   DOCS_REVIEW_FILE (empty when it found nothing). It runs only when
+//   HAS_ANTHROPIC_KEY is `true`; otherwise the issue says it was skipped. A
+//   missing file means the step failed, and an open issue then stays open.
 //
 // Issues are created with GH_TOKEN (the workflow's token). The issue carries
 // MARKER, so a rerun edits it instead of opening another. When both checks
 // pass, an open issue is closed.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -57,8 +61,16 @@ function checkApi() {
   return { behind: true, files: stale[1].split(', ') };
 }
 
-export function issueBody(sdk, api) {
-  const lines = [MARKER, '', 'The weekly check found skills that lag what they document. Regenerate them with the recipes in `CLAUDE.md`, then release.', ''];
+export function readReview(env) {
+  if (env.HAS_ANTHROPIC_KEY !== 'true') return { skipped: true };
+  const file = env.DOCS_REVIEW_FILE;
+  if (!file || !existsSync(file)) return { failed: true };
+  const findings = readFileSync(file, 'utf8').trim();
+  return findings ? { behind: true, findings } : { behind: false };
+}
+
+export function issueBody(sdk, api, review) {
+  const lines = [MARKER, '', 'The weekly check found skills that lag what they document. Fix them with the recipes in `CLAUDE.md`, then release.', ''];
   if (sdk.behind) {
     lines.push(
       '## React SDK skill',
@@ -81,8 +93,24 @@ export function issueBody(sdk, api) {
       '',
     );
   }
+  if (review.behind) {
+    lines.push(
+      '## Docs review',
+      '',
+      'Claude compared the hand-written guidance with the docs guides and the SDK package and found these mismatches. Check each against the source before fixing it.',
+      '',
+      review.findings,
+      '',
+    );
+  }
   if (api.skipped) {
     lines.push('_The API check was skipped: the `APIDOCS_TOKEN` secret isn\'t set, so the spec in `taxbit-private/readme-apidocs` can\'t be read._', '');
+  }
+  if (review.skipped) {
+    lines.push('_The docs review was skipped: the `ANTHROPIC_API_KEY` secret isn\'t set._', '');
+  }
+  if (review.failed) {
+    lines.push('_The docs review failed this week; see the workflow run\'s log._', '');
   }
   return lines.join('\n');
 }
@@ -99,11 +127,13 @@ function openIssue() {
 async function main(argv) {
   const sdk = await checkSdk();
   const api = checkApi();
-  const behind = sdk.behind || api.behind;
+  const review = readReview(process.env);
+  const behind = sdk.behind || api.behind || review.behind;
   console.error(`React SDK: documents ${sdk.documented}, npm latest ${sdk.latest}${sdk.behind ? ' (behind)' : ''}.`);
   console.error(`API: ${api.skipped ? 'skipped (no APIDOCS_TOKEN)' : api.behind ? `${api.files.length} files out of date` : 'up to date'}.`);
+  console.error(`Docs review: ${review.skipped ? 'skipped (no ANTHROPIC_API_KEY)' : review.failed ? 'failed (no findings file)' : review.behind ? 'found mismatches' : 'no mismatches'}.`);
 
-  const body = issueBody(sdk, api);
+  const body = issueBody(sdk, api, review);
   if (argv.includes('--dry-run')) {
     if (behind) console.log(body);
     return;
@@ -115,7 +145,7 @@ async function main(argv) {
     console.error(`Updated issue #${existing}.`);
   } else if (behind) {
     console.error(gh(['issue', 'create', '--title', TITLE, '--body', body]).trim());
-  } else if (existing) {
+  } else if (existing && !review.failed) {
     gh(['issue', 'close', String(existing), '--comment', 'The weekly check found nothing behind.']);
     console.error(`Closed issue #${existing}.`);
   }
