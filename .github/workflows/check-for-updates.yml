@@ -1,11 +1,15 @@
-# Every Monday, checks whether the skills lag what they document: a newer
-# @taxbit/react-sdk on npm, or an API spec change in readme-apidocs. Opens one
-# issue saying what to regenerate (or updates it), and closes it once both
-# checks pass. See scripts/check-for-updates.mjs.
-#
-# The API check needs the APIDOCS_TOKEN secret: a token that can read
-# taxbit-private/readme-apidocs. Without it only the React SDK is checked.
-# Runs only in this public repo, not in the private mirror.
+# Every Monday, checks whether the skills lag what they document, and keeps
+# one issue open saying what to fix (or closes it once nothing is behind).
+# Three checks:
+# - React SDK: a newer @taxbit/react-sdk on npm.
+# - API: a spec change in readme-apidocs. Needs the APIDOCS_TOKEN secret, a
+#   token that can read taxbit-private/readme-apidocs.
+# - Docs review: Claude rereads the docs guides and the SDK package and lists
+#   what the hand-written guidance gets wrong. Needs the ANTHROPIC_API_KEY
+#   secret.
+# A check whose secret isn't set is skipped, and the issue says so. See
+# scripts/check-for-updates.mjs. Runs only in this public repo, not in the
+# private mirror.
 name: Check for updates
 
 on:
@@ -21,6 +25,9 @@ jobs:
   check:
     if: github.repository == 'taxbit-shared/taxbit-skills'
     runs-on: ubuntu-latest
+    env:
+      HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      DOCS_REVIEW_FILE: .docs-review/findings.md
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +35,27 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check the skills against npm and the API spec
+      - name: Review the skills against the docs guides
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          claude_args: >-
+            --model claude-sonnet-5-5
+            --max-turns 80
+            --allowedTools "Read,Glob,Grep,Write,WebFetch(domain:apidocs.taxbit.com),Bash(npm view:*),Bash(npm pack:*),Bash(mkdir:*),Bash(tar:*)"
+          prompt: |
+            Check the hand-written guidance in this repo's two skills against Taxbit's published docs and the React SDK package. Don't change any file except ${{ env.DOCS_REVIEW_FILE }}.
+
+            1. Read the guidance: skills/react-sdk/SKILL.md, skills/react-sdk/reference/*.md, skills/api/SKILL.md, src/api-notes/*.md and src/field-notes.mjs. Skip skills/api/reference/: it's generated from the API spec and checked separately.
+            2. Read the guides. CLAUDE.md lists them under "How to Regenerate the API Skill" and "How to Regenerate the React SDK Skill". Start from https://apidocs.taxbit.com/llms.txt and append .md to a page URL for markdown. Read the guides (docs/*.md), not the endpoint reference pages.
+            3. Read the React SDK package at the version skills/react-sdk/SKILL.md documents: `mkdir -p .docs-review && cd .docs-review && npm pack @taxbit/react-sdk@<version> && tar xzf taxbit-react-sdk-<version>.tgz`. Its .d.ts files under package/dist/src and its CHANGELOG.md are the source of truth for the SDK; when a guide disagrees with the package, the package wins.
+            4. Report a mismatch only when you can quote both the skill text and the guide or package text that contradicts it. Also report a gap when a guide documents an endpoint, prop, required field, status, error shape, limit or URL that a developer needs and the skill leaves out or gets wrong. Don't report wording, style, ordering, detail the skill leaves to its reference files, or the known documentation errors CLAUDE.md lists.
+            5. Write ${{ env.DOCS_REVIEW_FILE }}. For each mismatch, write a `### <short title>` heading, then a **Skill:** line with the file path and the quoted text, a **Source:** line with the URL (or package file) and the quoted text, and a **Fix:** line with one sentence. If you find no mismatches, write an empty file.
+
+      - name: Check the skills and update the issue
+        if: ${{ !cancelled() }}
         run: node scripts/check-for-updates.mjs
         env:
           GH_TOKEN: ${{ github.token }}
