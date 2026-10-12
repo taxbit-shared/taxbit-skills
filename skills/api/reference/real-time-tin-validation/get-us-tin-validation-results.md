@@ -14,19 +14,13 @@ Retrieves the validation result for a previously submitted US TIN and name combi
 | --- | --- |
 | `validationId` | The unique identifier for the US TIN validation request, provided in the POST response. |
 
-**Query parameters**
-
-| Name | Type | Required | Description |
-| --- | --- | --- | --- |
-| `unmask_tin` | string | No | Whether to unmask the Tax Identification Number (TIN) in the response. One of: `true`, `false`. |
-
 **Response 200**: US TIN Validation Data
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `id` | string (uuid) | Yes | The unique identifier for the US TIN validation request, provided in the POST response. |
 | `legal_name` | string | Yes | The legal name of the person or entity to validate. |
-| `tin` | one of several shapes | Yes |  |
+| `tin` | string | Yes | The US issued Tax Identification Number. |
 | `status` | string | Yes | The status of the US TIN validation request: * `PENDING`: The request is pending validation, either due to it being an asynchronous request or the validation could not be completed * `VALID_SSN_MATCH`: The US TIN is a valid SSN and matches the legal name * `VALID_EIN_MATCH`: The US TIN is a valid EIN and matches the legal name * `VALID_SSN_EIN_MATCH`: The US TIN is a valid SSN and EIN and matches the legal name * `MISMATCH`: The US TIN does not match the legal name * `TIN_NOT_ISSUED`: The provided US TIN has not been issued. One of: `PENDING`, `VALID_SSN_MATCH`, `VALID_EIN_MATCH`, `VALID_SSN_EIN_MATCH`, `MISMATCH`, `TIN_NOT_ISSUED`. |
 | `validation_date` | string (date-time) | No | The date and time that the US TIN validation result was received from the IRS. |
 

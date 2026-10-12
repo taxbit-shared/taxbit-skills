@@ -44,6 +44,10 @@ Retrieves a filer by ID.
 | `data.contact_email` | string (email) | No | The email address of the Filer's contact person. |
 | `data.arn` | string | No | The Acknowledgment Routing Number (ARN) of the Filer. Must be exactly 12 numeric digits. |
 | `data.rtn` | string | No | The Routing Transit Number (RTN) of the Filer. Reported in the optional PAYER’S RTN box on Form 1099-INT, for financial institutions participating in the IRS program for direct deposit of refunds. Must be exactly 9 numeric digits. |
+| `data.nexus_country_code` | string | No | The two-character ISO 3166-1 alpha-2 country code of the jurisdiction the Filer's nexus is in. |
+| `data.nexus_type` | string | No | How the Filer is connected to the nexus jurisdiction. One of: `TAX_RESIDENT`, `INCORPORATED`, `PLACE_OF_MANAGEMENT`, `REGULAR_PLACE_OF_BUSINESS`, `PROVIDES_CRYPTO_ASSET_SERVICES`, `BRANCH`. |
+| `data.exchange_url` | string | No | The URL of the Filer's exchange. |
+| `data.non_resident_cnpj` | string | No | Brazilian CNPJ of a Filer that is not tax resident in Brazil. Accepted with or without punctuation. |
 | `data.cesop_psp_ids` | array of object | No | An array of CESOP Payment Service Provider (PSP) identifiers associated with the Filer. |
 | `data.cesop_psp_ids[].psp_id` | string | Yes | The Payment Service Provider (PSP) identifier. |
 | `data.cesop_psp_ids[].country` | string | No | Two-character ISO 3166-1 alpha-2 country code for this PSP. |

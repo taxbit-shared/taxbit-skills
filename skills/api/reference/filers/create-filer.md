@@ -32,6 +32,10 @@ Creates a new filer for the tenant.
 | `giin` | string | No | The Global Intermediary Identification Number (GIIN) of the Filer. |
 | `arn` | string | No | The ATO Reference Number (ARN) of the Filer. Used for Australia SERR reporting. Must be exactly 12 numeric digits. |
 | `rtn` | string | No | The Routing Transit Number (RTN) of the Filer. Reported in the optional PAYER’S RTN box on Form 1099-INT, for financial institutions participating in the IRS program for direct deposit of refunds. Must be exactly 9 numeric digits. |
+| `nexus_country_code` | string | No | The two-character ISO 3166-1 alpha-2 country code of the jurisdiction the Filer's nexus is in. |
+| `nexus_type` | string | No | How the Filer is connected to the nexus jurisdiction. One of: `TAX_RESIDENT`, `INCORPORATED`, `PLACE_OF_MANAGEMENT`, `REGULAR_PLACE_OF_BUSINESS`, `PROVIDES_CRYPTO_ASSET_SERVICES`, `BRANCH`. |
+| `exchange_url` | string | No | The URL of the Filer's exchange. |
+| `non_resident_cnpj` | string | No | Brazilian CNPJ of a Filer that is not tax resident in Brazil. Accepted with or without punctuation. |
 | `form_1099_k_filer_type` | string | No | The filer type classification for Form 1099-K. One of: `PAYMENT_SETTLEMENT_ENTITY`, `ELECTRONIC_PAYMENT_FACILITATOR_OR_OTHER_THIRD_PARTY`. |
 | `form_1099_k_transaction_type` | string | No | The transaction type for Form 1099-K. One of: `PAYMENT_CARD_TRANSACTIONS`, `THIRD_PARTY_NETWORK_TRANSACTIONS`. |
 | `form_1042_s_chapter_3_status` | string | No | The Chapter 3 withholding status for Form 1042-S. One of 25 values: see [values/form-1042-s-chapter-3-status.md](../values/form-1042-s-chapter-3-status.md). |
@@ -52,7 +56,7 @@ Creates a new filer for the tenant.
 Example request body:
 
 ```json
-{"name":"Example HQ, Inc","tin":"12-3456789","ein":"82-1234567","tax_country_code":"US","vat_id":"DE123456789","vat_country":"DE","contact_name":"Jane Doe","contact_title":"Tax Department","contact_email":"tax@example.com","contact_phone":"+15551234567","giin":"ABCDEF.00000.LE.840","arn":"123456789012","rtn":"021000021","cra_account_number":"123456789","cra_representative_identifier":"ABC1234","pse_name":"Example PSE","pse_telephone_number":"+15559998888"}
+{"name":"Example HQ, Inc","tin":"12-3456789","ein":"82-1234567","tax_country_code":"US","vat_id":"DE123456789","vat_country":"DE","contact_name":"Jane Doe","contact_title":"Tax Department","contact_email":"tax@example.com","contact_phone":"+15551234567","giin":"ABCDEF.00000.LE.840","arn":"123456789012","rtn":"021000021","nexus_country_code":"BR","nexus_type":"TAX_RESIDENT","exchange_url":"https://exchange.example.com","non_resident_cnpj":"12.345.678/0001-95","cra_account_number":"123456789","cra_representative_identifier":"ABC1234","pse_name":"Example PSE","pse_telephone_number":"+15559998888"}
 ```
 
 **Response 201**: Filer created successfully.

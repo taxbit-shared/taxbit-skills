@@ -100,4 +100,4 @@ Returns the submitted body under `data`, plus:
 | `data.is_individual` | boolean | No | Indicates whether the account owner is an individual. |
 | `data.self_certification_account_type` | string | No | The type of account the account owner is completing a self-certification for. One of: `FINANCIAL_INSTITUTION`, `PASSIVE_NON_FINANCIAL_ENTITY`, `ACTIVE_NON_FINANCIAL_ENTITY`. |
 
-**Errors:** 400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found · 429 Too Many Requests
+**Errors:** 400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found · 409 Conflict · 429 Too Many Requests

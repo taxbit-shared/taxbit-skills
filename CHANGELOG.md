@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-10-12
+
+### Changed
+- **API:** endpoint reference regenerated from the spec (`35bb94d88aec`): the two new Reports endpoints, `GET /reports/submitted-files` and `GET /reports/submitted-files/{fileId}` (67 operations, up from 65); the Filer nexus fields (`nexus_country_code`, `nexus_type`), `exchange_url` and `non_resident_cnpj`; `409 Conflict` on the tax documentation submit endpoints; and smaller description fixes.
+
+### Fixed
+- **API:** error handling documents all three error shapes from the Errors page (the standard envelope with `issues`, the `POST /transactions/external-id` shape, and the gateway 403's capital-M `Message`), with retry and logging guidance. The skill showed only the envelope.
+- **API:** the rate limit is 100 requests per second with a burst of 1,000, per tenant and route, with the rate-limit headers and `Retry-After`. The skill said 50, which is Create Account Owner's own limit.
+- **API:** removed the staging base URL. Customers have sandbox and production tenants, and a sandbox tenant uses the production base URLs with its own credentials.
+
 ## [0.6.2] - 2026-10-12
 
 ### Changed
