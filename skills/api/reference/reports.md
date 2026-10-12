@@ -17,3 +17,5 @@ Open an endpoint's file for its parameters, body fields, allowed values, example
 | --- | --- | --- |
 | [POST /reports/inventory-summary](reports/trigger-an-inventory-summary-report.md) | Trigger an Inventory Summary Report | tenant |
 | [GET /reports/inventory-summary/{reportId}](reports/get-inventory-summary-report-status.md) | Get Inventory Summary Report Status | tenant |
+| [GET /reports/submitted-files](reports/list-submitted-files.md) | List Submitted Files | tenant |
+| [GET /reports/submitted-files/{fileId}](reports/get-submitted-file-reports.md) | Get Submitted File Reports | tenant |

@@ -36,8 +36,9 @@ Taxbit provides REST APIs for cryptocurrency and digital asset tax compliance, i
 ```
 US / Multi: https://api.multi1.enterprise.taxbit.com/v1
 EU:         https://api.eutax1.enterprise.taxbit.com/v1
-Staging:    https://api.multi1.enterprise-staging.taxbit.com/v1
 ```
+
+A sandbox tenant uses the same base URLs as production, with its own credentials; the tenant, not the URL, keeps sandbox data apart.
 
 Get `client_id`, `client_secret`, and `tenant_id` from the Taxbit Dashboard → Settings → Developer Settings.
 
@@ -96,7 +97,7 @@ Content-Type: application/json
 
 ## Endpoint Reference
 
-Every endpoint (65 in all) is documented in `reference/`, generated from Taxbit's OpenAPI spec. **Read the file for the area you're working in, then the endpoint's own file**; don't guess field names, enums, or paths from memory.
+Every endpoint (67 in all) is documented in `reference/`, generated from Taxbit's OpenAPI spec. **Read the file for the area you're working in, then the endpoint's own file**; don't guess field names, enums, or paths from memory.
 
 - `reference/<area>.md`: notes on the area's behavior, then a table of its endpoints (method, path, summary, token type), each linking to its file
 - `reference/<area>/<endpoint>.md`: path and query parameters, every request body field with type, required flag and allowed values, an example body, and the response fields
@@ -117,7 +118,7 @@ Paths in the reference omit the `/v1` prefix, which the base URLs above already 
 | Gains | [reference/gains.md](reference/gains.md) | 3 | gains, breakdown, summary |
 | Inventory | [reference/inventory.md](reference/inventory.md) | 6 | lots and summaries; transfer lots |
 | Real-Time TIN Validation | [reference/real-time-tin-validation.md](reference/real-time-tin-validation.md) | 2 | validate a US TIN and name |
-| Reports | [reference/reports.md](reference/reports.md) | 2 | async inventory summary reports |
+| Reports | [reference/reports.md](reference/reports.md) | 4 | async inventory summary reports; submitted files and their reports |
 | Tax Documentation | [reference/tax-documentation.md](reference/tax-documentation.md) | 13 | W-9, W-8BEN, W-8BEN-E, W-8IMY, self-certification; status; PDFs |
 | Tax Treaty Rates | [reference/tax-treaty-rates.md](reference/tax-treaty-rates.md) | 1 | treaty withholding rates by country |
 | Transaction Aggregations | [reference/transaction-aggregations.md](reference/transaction-aggregations.md) | 1 | income rollups for an account |
@@ -149,7 +150,7 @@ Taxbit delivers event notifications via HTTP `POST` (`content-type: application/
 
 ## Rate Limits
 
-Default API rate limit is **50 requests per second**. A `429 Too Many Requests` indicates throttling — implement exponential backoff. Contact your Implementation Manager for higher limits. (Webhook *delivery* has a separate 300 RPS default and is unrelated to your request budget.)
+The default limit is **100 requests per second with a burst of 1,000**, applied per tenant to each method and route. Some endpoints have their own limit (Create Account Owner allows 50 per second), and some organizations have custom limits; the Implementation Manager can confirm them. Authenticated responses carry `x-ratelimit-limit` (the burst) and `x-ratelimit-remaining`. A `429 Too Many Requests` means throttling: wait for `Retry-After` when present, otherwise back off exponentially, then retry. (Webhook *delivery* has a separate 300 RPS default and is unrelated to your request budget.)
 
 ## Error Handling
 
@@ -161,13 +162,13 @@ Standard HTTP status codes:
 - `409` — Conflict (duplicate ID, or filer in use)
 - `429` — Rate limited
 
-Error response format:
-```json
-{
-  "error": "string",
-  "message": "string"
-}
-```
+Read the status first and the body second: the body's shape isn't the same everywhere. Three shapes exist:
+
+- **Standard envelope** (most endpoints): `{"error": "Bad Request", "message": "Validation failed", "issues": [...]}`. `issues` appears when the body fails schema validation; each issue has `code`, `path` (the field) and `message`, plus `values` for a field with a fixed set of values.
+- **`POST /transactions/external-id`** (and transaction lookups): `status`, `message`, `data` and `error`, with the detail in `data[].message`.
+- **Gateway 403**: a single `Message` field with a capital M, e.g. `{"Message": "User is not authorized to access this resource with an explicit deny"}`.
+
+So read `message` case-insensitively and don't assume `error` is present. Retry `429`, `5xx` and network timeouts with bounded exponential backoff and jitter, and treat a failed write as an unknown outcome. Never retry other `4xx`. Log the full body and the `x-request-id` header; `message` is written for developers, so translate it before showing users anything. Full detail: [Errors](https://apidocs.taxbit.com/docs/errors).
 
 ## Security
 

@@ -30,6 +30,6 @@ Example request body:
 | `access_token` | string | Yes | Bearer token for further access to the API. |
 | `expires_in` | integer | Yes | Time until token expires (in seconds). |
 | `token_type` | string | Yes | Access token type. |
-| `scope` | string | No |  |
+| `scope` | string | No | Space-delimited scopes carried by the token. The Taxbit API surface is currently unscoped, so the authorization server omits this field. |
 
 **Errors:** 401 Invalid credentials · 403 Forbidden · 429 Too Many Requests

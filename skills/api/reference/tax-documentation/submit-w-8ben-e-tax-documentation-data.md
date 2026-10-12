@@ -271,4 +271,4 @@ Example request body:
 | `data.box_43` | boolean | No |  |
 | `data.signature` | string | No | The signature exactly as provided on the submission. Absent when the submission did not include one. |
 
-**Errors:** 400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found · 429 Too Many Requests
+**Errors:** 400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found · 409 Conflict · 429 Too Many Requests

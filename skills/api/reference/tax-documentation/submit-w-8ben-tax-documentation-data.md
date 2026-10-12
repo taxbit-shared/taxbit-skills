@@ -135,4 +135,4 @@ Example request body:
 | `data.treaty_claim_has_additional_conditions` | boolean | No | Indicates whether there are additional conditions under the treaty. **Note:** `true` when the treaty requires the claimant to meet additional conditions for this claim. Business profits and other income always do; royalties depend on the country. If the claim comes back saying additional conditions "must be checked", set it to `true`. |
 | `data.signature` | string | No | The signature exactly as provided on the submission. Absent when the submission did not include one. |
 
-**Errors:** 400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found · 429 Too Many Requests
+**Errors:** 400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found · 409 Conflict · 429 Too Many Requests
