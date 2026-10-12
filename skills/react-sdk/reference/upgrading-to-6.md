@@ -1,4 +1,4 @@
-<!-- Regenerate from the @taxbit/react-sdk 6.0.0 package (CHANGELOG.md, style/*.css, dist/) with SKILL.md (see CLAUDE.md). -->
+<!-- Regenerate from the @taxbit/react-sdk 6.x package (CHANGELOG.md, style/*.css, dist/) with SKILL.md (see CLAUDE.md). -->
 
 # Upgrading to 6.0.0
 
@@ -40,3 +40,20 @@
 - Submitted documents include the certification statements and the no-other-tax-residencies confirmations as optional booleans. The certifications are affirmed by default.
 - Every locale carries every string; no more partial English fallback.
 - A previously submitted self-certification or digital platform seller record now loads back into the form.
+
+## Later 6.x releases
+
+None of these break anything; upgrade from any 6.x release without changes.
+
+**6.2.0 (2026-10-06)**
+
+- **Usage telemetry, on by default.** `TaxbitQuestionnaire` posts usage events to `telemetry/events`: the questionnaire loading, each step shown, Next / Back / Edit / Submit presses, the validation errors a press revealed, real-time TIN and GIIN outcomes, and submission, along with the configuration props in effect. Events carry step ids, field keys, coded validation keys (for example `required`) and check status codes, never what the user typed. They go to the same environment, region or `proxyDomain` as the other requests, with the same bearer token. A failed event never blocks or interrupts the questionnaire.
+  - To opt out, pass `telemetry={false}`; no telemetry requests are made. Nothing is sent without a `bearerToken` either, as in `demoMode`.
+  - If your proxy forwards only listed paths, add `telemetry/events`. Without it the events fail quietly.
+  - A CSP that already allows the SDK's API host needs nothing new.
+- **VIES failures no longer block DPS submission.** A VAT number that failed its VIES check shows an "Invalid" badge beside the VAT label on the tax information step and on the summary, and the user can resubmit without changing it.
+- **Brazil entity TIN (CNPJ)** accepts the alphanumeric CNPJ: 12 letters or digits followed by 2 check digits, entered as 14 characters or formatted as `XX.XXX.XXX/XXXX-NN`. Before, only the formatted all-digit CNPJ was accepted.
+
+**6.1.0 (2026-10-01)**
+
+- The country and phone-country pickers include 22 more jurisdictions (for example `FQ`, `BURMA`, `XK`) with localized names.

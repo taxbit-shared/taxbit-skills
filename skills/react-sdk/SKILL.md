@@ -16,11 +16,13 @@ You are a Taxbit React SDK integration assistant. Help developers embed tax docu
 ## Package Info
 
 - **NPM:** `@taxbit/react-sdk`
-- **Latest version:** `6.0.0`
+- **Latest version:** `6.2.0`
 - **Install:** `npm i @taxbit/react-sdk`
 - **Compatibility:** React 16–19 (peer dependency), TypeScript 5+ (type definitions bundled — no separate `@types` package needed)
 
 **6.0.0 breaking changes** (props, exports, and `useTaxbit` unchanged): colors are `--taxbit-color-*` custom properties with new defaults; the primary button precedes Back in the DOM; tests must select controls by visible label or `id`, not a field-key `aria-label`; the ES build loads each language from its own file. Details: [reference/upgrading-to-6.md](reference/upgrading-to-6.md) (from 4.x, also [upgrading-to-5.md](reference/upgrading-to-5.md)). Under server rendering the questionnaire renders only its `loadingComponent`; to skip it, import client-side with `dynamic(..., { ssr: false })`.
+
+**Since 6.0.0** (no breaking changes): 6.2.0 turns on usage telemetry by default (`telemetry={false}` turns it off; a proxy that forwards only listed paths needs `telemetry/events`). In DPS, a VAT number that fails its VIES check no longer blocks submission. The Brazil entity TIN (CNPJ) accepts the alphanumeric format. 6.1.0 added 22 jurisdictions to the country pickers. Details: [reference/upgrading-to-6.md](reference/upgrading-to-6.md#later-6x-releases).
 
 ## What It Does
 
@@ -163,6 +165,7 @@ function TaxForm() {
 | `proxyDomain` | string | No | — | Route API calls through your own proxy (mutually exclusive with `region`) |
 | `proxyHeaders` | `Record<string, string>` | No | — | Extra headers for the proxy (`authorization` / `content-type` reserved) |
 | `poweredByTaxbit` | boolean | No | `false` | Show "Powered by Taxbit" footer |
+| `telemetry` | boolean | No | `true` | New in 6.2.0. Posts usage events (load, steps shown, Next / Back / Edit / Submit presses, validation errors shown, real-time TIN/GIIN outcomes, submission) to `telemetry/events` with the same token and host as other requests. Carries step ids, field keys and coded error keys, never what the user typed. A failed event never affects the form. `false` sends nothing; nothing is sent without a `bearerToken` (e.g. `demoMode`) |
 | `loadingComponent` | ReactNode | No | "Retrieving interview status…" | Custom loading UI (not allowed with `demoMode`) |
 | `onProgress` | `(progress: Progress) => void` | No | — | Fires on navigation (Next, Back, Cancel, Submit) |
 | `onSubmit` | `(data: ClientTaxDocumentation) => void`| No | — | Fires after client-side validation, before the API completes |
@@ -257,7 +260,7 @@ type ClientTaxDocumentationStatus = {
 
 **TIN validation status (W-9):** `PENDING`, `VALID_SSN_MATCH`, `VALID_EIN_MATCH`, `VALID_SSN_EIN_MATCH`, `MISMATCH`, `TIN_NOT_ISSUED`, `INVALID_DATA`, `FOREIGN`, `ERROR`
 
-**VAT validation status (DPS):** `PENDING`, `VALID`, `INVALID`, `INSUFFICIENT_DATA`, `NOT_REQUIRED`, `NON_EU`
+**VAT validation status (DPS):** `PENDING`, `VALID`, `INVALID`, `INSUFFICIENT_DATA`, `NOT_REQUIRED`, `NON_EU`. Since 6.2.0, a VAT number that failed its VIES check (`INVALID`) doesn't block submission: the questionnaire shows an "Invalid" badge beside the VAT label and on the summary, and the user can resubmit without changing it.
 
 Statuses also carry expiration dates (3 years from submission) and issues requiring resubmission.
 
@@ -277,7 +280,7 @@ A standalone widget (v4+) that collects only a list of tax residencies (country 
 
 - **Staging:** add `staging` (with a staging-minted token) to `TaxbitQuestionnaire`, `useTaxbit`, and `TaxbitCuringDocumentation`; it targets `api.multi1.enterprise-staging.taxbit.com`.
 - **EU tenants:** add `region="EU"` to the component (and mint the token against the EU token endpoint).
-- **Proxied networks:** set `proxyDomain` (and optional `proxyHeaders`) to route SDK API calls through your own gateway. Your proxy must set the `authorization` and `content-type` headers itself — they are reserved. `proxyDomain` and `region`/`staging` are mutually exclusive.
+- **Proxied networks:** set `proxyDomain` (and optional `proxyHeaders`) to route SDK API calls through your own gateway. Your proxy must set the `authorization` and `content-type` headers itself — they are reserved. `proxyDomain` and `region`/`staging` are mutually exclusive. On 6.2.0+, if your proxy forwards only listed paths, add `telemetry/events`, or usage events fail quietly (the questionnaire is unaffected).
 
 ## CSS / Styling & Customization
 
@@ -295,7 +298,7 @@ If your app uses CSP headers, add:
 connect-src https://*.taxbit.com;
 ```
 
-If you use `proxyDomain`, allow your proxy host instead.
+If you use `proxyDomain`, allow your proxy host instead. Telemetry (6.2.0+) posts to the same host, so it needs nothing new.
 
 ## Demo Mode
 
@@ -309,6 +312,7 @@ The SDK handles tax documentation PII (TINs, addresses, dates of birth), subject
 - Never log the `bearerToken`, or data from `onProgress`, `onSubmit`, `onSuccess`, or the curing callbacks.
 - Treat the adaptive-mode `data` prop as sensitive; don't persist it client-side.
 - Add `connect-src https://*.taxbit.com;` to your CSP.
+- Usage telemetry (on by default since 6.2.0) carries step ids, field keys and coded error keys, never form values. Pass `telemetry={false}` if your policy rules out usage reporting.
 
 The full checklist (PII handling, git, secrets, monitoring, local environment, automation boundaries): [reference/security.md](reference/security.md).
 

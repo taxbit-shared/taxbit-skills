@@ -98,7 +98,7 @@ Known documentation errors to keep flagging in notes: the Austria guide shows a 
    - `https://apidocs.taxbit.com/docs/remediation-faq.md`
    - `https://apidocs.taxbit.com/docs/curing-documentation.md`
    - `https://apidocs.taxbit.com/docs/how-the-sdk-works.md`
-   - Check the latest version with `npm view @taxbit/react-sdk version` (and `dist-tags`) — the `latest` tag is the version to document (was `6.0.0` at last regen; the `beta` tag lags far behind `latest` and should be ignored).
+   - Check the latest version with `npm view @taxbit/react-sdk version` (and `dist-tags`) — the `latest` tag is the version to document (was `6.2.0` at last regen; the `beta` tag lags far behind `latest` and should be ignored).
    - **Trust the package's bundled `.d.ts` files over the web docs.** The apidocs pages lag the published package; when they disagree, the type declarations in `dist/src/` win.
 2. Write the skill with this structure. **Keep `SKILL.md` under ~20 KB / ~5,000 tokens** (Anthropic: under 500 lines; after compaction only a skill's first 5,000 tokens are kept). Core usage stays in `SKILL.md`. Task-specific detail goes in `skills/react-sdk/reference/<topic>.md`, with a short pointer in `SKILL.md` that keeps the facts an agent must not get wrong (for styling: no CSS variables, override the `taxbit-*` classes):
    - `reference/styling.md`: the full CSS / Styling & Customization section
