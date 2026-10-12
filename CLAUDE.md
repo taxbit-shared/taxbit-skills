@@ -152,6 +152,10 @@ The README should be a brief user-facing document with:
 
 Taxbit's Claude organization can only sync plugins from a private repo, so `taxbit-private/taxbit-skills` mirrors this one. `.github/workflows/sync-from-public.yml` runs hourly (and on demand) **only in the mirror** and fast-forwards its `main` to this repo's `main`; the org library syncs from the mirror on each push. Always edit here, never in the mirror: a commit made only in the mirror stops the sync with an error. Changes to files under `.github/workflows/` can't be pushed by the workflow's token, so after changing a workflow, push the mirror once by hand (`git push git@github.com:taxbit-private/taxbit-skills.git main`).
 
+## Weekly update check
+
+`.github/workflows/check-for-updates.yml` runs `scripts/check-for-updates.mjs` every Monday (and on demand) in this repo only. It compares npm's `latest` `@taxbit/react-sdk` with the version `skills/react-sdk/SKILL.md` documents (the `- **Latest version:**` line, so keep that line's format), and runs `generate-api-reference.mjs --check` against the live spec. If either is behind, it opens one issue saying what to regenerate, or updates the one already open. It closes that issue once both pass. The API check needs the `APIDOCS_TOKEN` secret, a token that can read `taxbit-private/readme-apidocs`; without it the issue says the check was skipped. `node scripts/check-for-updates.mjs --dry-run` runs both checks locally and prints the issue body (`APIDOCS_TOKEN=$(gh auth token)` for the API half).
+
 ## Versioning
 
 When tagging a new version:
