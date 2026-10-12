@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-10-12
+
+### Changed
+- **React SDK:** documented version bumped `6.0.0` → `6.2.0`. Checked against the 6.2.0 package (`CHANGELOG.md`, `README.md`, the `.d.ts` files and the bundle), not only the SDK changelog.
+
+### Added
+- **React SDK:** the `telemetry` prop on `TaxbitQuestionnaire` (6.2.0, default `true`): what the usage events carry and never carry, how to opt out, and that a proxy that forwards only listed paths needs `telemetry/events`. Covered in the props table, the proxy, CSP and security sections, and `reference/upgrading-to-6.md`.
+- **React SDK:** a "Later 6.x releases" section in `reference/upgrading-to-6.md`: 6.2.0 (telemetry, VIES failures no longer block DPS submission, alphanumeric CNPJ) and 6.1.0 (22 more jurisdictions in the country pickers).
+- **React SDK:** the VAT status section says a failed VIES check no longer blocks submission on 6.2.0+.
+
 ## [0.6.1] - 2026-10-01
 
 ### Fixed
