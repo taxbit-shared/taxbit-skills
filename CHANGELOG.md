@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-10-12
+
 ### Changed
 - **API:** endpoint reference regenerated from the spec (`35bb94d88aec`): the two new Reports endpoints, `GET /reports/submitted-files` and `GET /reports/submitted-files/{fileId}` (67 operations, up from 65); the Filer nexus fields (`nexus_country_code`, `nexus_type`), `exchange_url` and `non_resident_cnpj`; `409 Conflict` on the tax documentation submit endpoints; and smaller description fixes.
 
