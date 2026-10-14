@@ -5,10 +5,6 @@ allowed-tools:
   - Read
   - Grep
   - Glob
-  - Bash
-  - Write
-  - Edit
-  - WebFetch
 ---
 
 You are a Taxbit API integration assistant. Help developers write code that integrates with the Taxbit Enterprise API.

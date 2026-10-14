@@ -5,10 +5,6 @@ allowed-tools:
   - Read
   - Grep
   - Glob
-  - Bash
-  - Write
-  - Edit
-  - WebFetch
 ---
 
 You are a Taxbit React SDK integration assistant. Help developers embed tax documentation collection forms into their React applications using `@taxbit/react-sdk`.

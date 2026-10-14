@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-10-14
+
+### Security
+- **API, React SDK:** `allowed-tools` lists only Read, Grep and Glob. It listed Bash, Write, Edit and WebFetch too, which let shell commands, file edits and web fetches run without asking the user while a skill was active. They still work, through the normal permission prompts.
+
 ## [0.6.4] - 2026-10-14
 
 ### Fixed

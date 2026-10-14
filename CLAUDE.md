@@ -109,7 +109,7 @@ Known documentation errors to keep flagging in notes: the Reading curing statuse
    - `reference/security.md`: the full checklist (the pointer keeps the essentials)
 
    Sections, in order:
-   - YAML frontmatter: `name: react-sdk`, `description` (trigger conditions), `allowed-tools` (Read, Grep, Glob, Bash, Write, Edit, WebFetch)
+   - YAML frontmatter: `name: react-sdk`, `description` (trigger conditions), `allowed-tools` (Read, Grep, Glob)
    - Role statement: "You are a Taxbit React SDK integration assistant..."
    - Package info (npm name, latest version, install command, React/TypeScript compatibility)
    - Exports list, Quick Start (demo mode + production) with CSS import
@@ -188,7 +188,8 @@ Example format:
 - **Generated, not written**: the API endpoint reference comes from the OpenAPI spec by script. Regenerating by fetching 60+ pages drifted: it missed every Assets endpoint and listed wrong `signature_capacity` values. The spec is generated from the API code, so the reference matches what the API accepts.
 - **Enum values included**: All enum values (disposition methods, TIN types, classifications, etc.) are listed inline so Claude can generate valid API payloads without guessing.
 - **Both token types documented**: The API skill documents both tenant-scoped and account-owner-scoped tokens because developers frequently confuse which to use. The React SDK skill also covers the account-owner token since it's required for the SDK.
-- **`allowed-tools` includes WebFetch**: Both skills include WebFetch so Claude can check the live docs if a developer asks about something not covered in the skill content.
+- **`allowed-tools` is read-only**: `allowed-tools` lets the listed tools run without asking the user while a skill is active, so both skills list only Read, Grep and Glob. Shell commands, file edits and web fetches (e.g. checking the live docs) still work, through the user's normal permission prompts. Don't add Bash, Write, Edit or WebFetch: a skill is installed on customers' machines, and a grant there would let any instruction in the skill, or in a page it fetches, run without the user approving it.
+- **Actions pinned to commit SHAs**: workflows reference each action by full commit SHA with the version in a comment, so a moved tag can't change the code that runs with the repo's secrets. To update one, resolve the new tag's SHA (`gh api repos/<owner>/<action>/commits/<tag> -q .sha`) and update both.
 - **Marketplace structure**: The `.claude-plugin/marketplace.json` with an `owner` field is required for the plugin to be installable via `/plugin marketplace add`. The `source: "./"` points to the plugin.json at the repo root.
 - **Cross-agent compatibility**: The `SKILL.md` format is compatible with both Claude Code plugins and the Vercel Skills ecosystem (`npx skills add`). The `allowed-tools` frontmatter is Claude-specific and ignored by other agents. No changes are needed to support both install methods.
 - **Two install methods, complementary**: `npx skills add` installs to `.claude/skills/` (and 41 other agent directories) for project-level auto-invocation. The Claude Code plugin install adds `/taxbit:api` and `/taxbit:react-sdk` slash commands. Both can coexist without conflict.
