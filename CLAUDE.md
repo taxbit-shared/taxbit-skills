@@ -68,7 +68,7 @@ node --test scripts/                                     # generator tests
 - **Size:** keep it small. Responses that echo the request body list only the fields the server adds, and identical responses point to the first endpoint that has them. The skill loads only the files a task needs, so smaller files mean less context used.
 - **New endpoints and fields** appear automatically on the next run. Check the diff, then update the area table in `SKILL.md` if a whole new area appeared.
 
-**2. The guidance is AI-regenerated from the hand-written guides.** This covers `SKILL.md` (everything except the reference index), `src/api-notes/<area>.md` and `src/field-notes.mjs`. It's behavior the spec can't express: how endpoints are used together, polling signals, read/write differences, and known documentation errors.
+**2. The guidance is AI-regenerated from the hand-written guides.** This covers `SKILL.md` (everything except the reference index), `skills/api/webhooks.md`, `src/api-notes/<area>.md` and `src/field-notes.mjs`. It's behavior the spec can't express: how endpoints are used together, polling signals, read/write differences, and known documentation errors.
 
 1. Start from `https://apidocs.taxbit.com/llms.txt` and read the **guides** (`docs/*.md`), not the endpoint reference pages; those are covered by the generator. Append `.md` to any URL for clean markdown. Key guides:
    - getting started and access (`docs/accessing-the-api.md`)
@@ -81,10 +81,11 @@ node --test scripts/                                     # generator tests
    - Tax Documentation (both the React SDK and Logic API guides, for the status and issues model)
 2. Write area-specific behavior into `src/api-notes/<area>.md`. Use the file name of the matching `skills/api/reference/<area>.md`; the generator fails on notes for an area that no longer exists. Keep the notes short, and put only what the spec lacks there: field lists, enums and types come from the generator.
 3. Keep `SKILL.md` to the role statement, API overview, base URLs, authentication (both token types), the Endpoint Reference index, webhooks, rate limits, error handling, security, integration patterns, and links. It should stay well under 20 KB.
+   - Webhooks aren't in the spec. `SKILL.md` keeps the event list, the envelope and the rules a handler must not get wrong (never `401`/`403`/`407`, signature over the re-serialized JSON, fast `2xx`, idempotent); `skills/api/webhooks.md` holds the rest of the Webhooks guide (setup, authentication, a full handler, every event's payload, testing, troubleshooting). It sits outside `reference/` because the generator deletes and rewrites that directory.
 4. Put format rules for individual body fields in `src/field-notes.mjs`. They're merged into those fields' descriptions everywhere they appear. Write format rules only; the API's validation response is the source of truth for exact per-country values.
 5. Rerun the generator so the notes are merged in.
 
-Known documentation errors to keep flagging in notes: the Austria guide shows a `calculation_status` field that isn't in the withholding response, and the docs' sample `treaty_claim_article_paragraph` ("Article 12, Paragraph 1") is rejected by the API. **Payers no longer exists:** Filers superseded it, so don't add a Payers section.
+Known documentation errors to keep flagging in notes: the Reading curing statuses guide's sample webhook handler reads `event_type` off `req.body` instead of each entry in `req.body.data` (flagged in `webhooks.md`); the Austria guide shows a `calculation_status` field that isn't in the withholding response, and the docs' sample `treaty_claim_article_paragraph` ("Article 12, Paragraph 1") is rejected by the API. **Payers no longer exists:** Filers superseded it, so don't add a Payers section.
 
 ### How to Regenerate the React SDK Skill (`skills/react-sdk/SKILL.md`)
 

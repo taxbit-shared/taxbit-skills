@@ -129,24 +129,18 @@ After a tax documentation submission, check `GET /account-owners/{id}/tax-docume
 
 ## Webhooks
 
-Taxbit delivers event notifications via HTTP `POST` (`content-type: application/json`). Subscriptions are configured with your Implementation Manager (endpoint URL, event types, optional rate/retry settings). You receive a secret key for signature verification.
+Taxbit `POST`s events to an HTTPS endpoint the customer gives their implementation manager; subscriptions aren't self-serve. Full details, a complete handler, and every event's payload: [webhooks.md](webhooks.md). **Read it before writing a handler.**
 
-**Event types:** `RTTM_TIN_VALIDATION`, `TAX_DOCUMENTATION_TIN_VALIDATION`, `ACCOUNT_OWNER_TIN_VALIDATION`, `INVENTORY_UPDATE`, `FORM_STATUS_UPDATE`, `ACCOUNT_OWNER_TAX_DOCUMENTATION_STATUS`.
+**Events:** `ACCOUNT_OWNER_TAX_DOCUMENTATION_STATUS` (any change to an account owner's tax documentation, including a submission, issues and curing; it carries the whole current state, the same as the status endpoint), `TAX_DOCUMENTATION_TIN_VALIDATION` and `ACCOUNT_OWNER_TIN_VALIDATION` (TIN match results), `RTTM_TIN_VALIDATION` (real-time TIN validation), `FORM_STATUS_UPDATE` (forms generated, filed, deleted), `INVENTORY_UPDATE`. There's no separate "form submitted" event.
 
-**Payload envelope:**
-```json
-{
-  "timestamp": "<ISO-8601>",
-  "data": [ { "event_type": "FORM_STATUS_UPDATE", "...": "event-specific fields" } ]
-}
-```
+**Payload:** `{ "timestamp": "<dispatch time>", "data": [ { "event_type": "...", ... } ] }`. Iterate `data` (one event today). Order by the event's own date fields, not `timestamp`.
 
-**Signature verification:**
-- Header: `x-taxbit-signature`, format `v1=<base64-digest>`.
-- Algorithm: `HMAC-SHA256(rawRequestBody, secretKey)`, Base64-encoded. Compute over the **raw** request body and compare.
-- The header may contain multiple comma-separated signatures (to support secret rotation) — accept the request if any one matches.
-
-**Delivery:** default max **300 RPS**; on failure Taxbit retries twice over the following hour (configurable).
+Rules a handler must follow:
+- **Never return `401`, `403` or `407`**, and don't let a WAF or gateway return them. An auth-class response can permanently disable the subscription until Taxbit re-enables it by hand. Reject a bad signature or malformed payload with `400` and alert the team.
+- **Verify `x-taxbit-signature`** on every request: HMAC-SHA256 with the subscription's secret over `JSON.stringify(parsedBody)` (the re-serialized JSON, not the raw bytes), base64, prefixed `v1=`. The header can hold several comma-separated signatures during secret rotation; accept if any matches, compared in constant time. `x-taxbit-source: webhook` is a fixed marker, not a credential.
+- **Acknowledge fast:** durably queue the event, return `2xx`, then process. Timeouts and non-`2xx` responses are retried (default 2 attempts within 1 hour, often configured differently: confirm with the implementation manager).
+- **Be idempotent and order-independent:** delivery is at least once and unordered. Ignore unknown fields and event types.
+- **Log `x-trace-id`**; Taxbit Support needs it to trace or replay deliveries.
 
 ## Rate Limits
 
@@ -258,7 +252,7 @@ When helping developers:
 6. **Implement retry logic** — respect 429 responses with exponential backoff.
 7. **Never log or expose credentials** — `client_id`, `client_secret`, and bearer tokens must be kept secure. Use environment variables.
 8. **Poll async work to completion** — check `calculation_status` (`in_progress`/`complete`) on gains/inventory reads, `status` on Reports, and document generation status before using results.
-9. **Verify webhook signatures** — always validate `x-taxbit-signature` before acting on a webhook payload.
+9. **Verify webhook signatures** — validate `x-taxbit-signature` before acting on a webhook payload, answer a bad one with `400` (never `401`/`403`), and follow the rules in [Webhooks](#webhooks).
 
 ## Full API Reference
 

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-10-14
+
+### Fixed
+- **API:** webhook signatures are computed over the re-serialized JSON payload (`JSON.stringify` of the parsed body), as the rewritten Webhooks guide says. The skill said to hash the raw request body, which can fail to match.
+
+### Added
+- **API:** `webhooks.md`, covering the rewritten Webhooks guide: setup and delivery settings (defaults are often changed per subscription), headers, the optional basic auth layer and its rotation, a complete handler with constant-time signature checks, what to return when, delivery guarantees (at least once, unordered, replay after retries run out), every event's payload, testing and troubleshooting.
+- **API:** the `SKILL.md` Webhooks section now lists the rules a handler must follow: never return `401`, `403` or `407` (an auth-class response can permanently disable the subscription; reject a bad signature with `400`), acknowledge fast and process afterwards, be idempotent and order-independent, ignore unknown fields, and log `x-trace-id`. It also says which event a tax documentation submission sends (`ACCOUNT_OWNER_TAX_DOCUMENTATION_STATUS`; there's no separate submission event).
+
 ## [0.6.3] - 2026-10-12
 
 ### Changed
